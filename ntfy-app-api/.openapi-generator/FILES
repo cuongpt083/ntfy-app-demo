@@ -1,5 +1,1 @@
 src/main/java/com/demo/ntfyappapi/api/ApiUtil.java
-src/main/java/com/demo/ntfyappapi/api/BooksApi.java
-src/main/java/com/demo/ntfyappapi/api/BooksApiDelegate.java
-src/main/java/com/demo/ntfyappapi/dto/Book.java
-src/main/java/com/demo/ntfyappapi/dto/BookRequest.java

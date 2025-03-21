@@ -1,0 +1,264 @@
+openapi: 3.0.3
+info:
+  title: Book Management API
+  description: API for managing book resources with approval workflow
+  version: 1.0.0
+  contact:
+    name: Your Company Name
+    email: developer@yourcompany.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+tags:
+  - name: Books
+    description: Book management operations
+
+components:
+  schemas:
+    BookStatus:
+      type: string
+      enum:
+        - DRAFT
+        - PENDING_APPROVAL
+        - APPROVED
+        - REJECTED
+
+    BookDTO:
+      type: object
+      required:
+        - title
+        - description
+        - isbn
+      properties:
+        id:
+          type: string
+          readOnly: true
+          description: Unique identifier for the book
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Title of the book
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+          description: Description of the book
+        isbn:
+          type: string
+          pattern: '^(?:ISBN(?:-10)?:? )?(?=[0-9X]{10}$|(?=(?:[0-9]+[- ]){3})[- 0-9X]{13}$)[0-9]{1,5}[- ]?[0-9]+[- ]?[0-9]+[- ]?[0-9X]$'
+          description: International Standard Book Number
+        status:
+          $ref: '#/components/schemas/BookStatus'
+        statusDescription:
+          type: string
+          nullable: true
+          description: Additional description for the current status
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+paths:
+  /books:
+    post:
+      summary: Create a new book
+      tags:
+        - Books
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookDTO'
+      responses:
+        '201':
+          description: Book created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDTO'
+        '400':
+          description: Invalid input
+
+    get:
+      summary: Retrieve all books
+      tags:
+        - Books
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/BookStatus'
+          required: false
+          description: Filter books by status
+      responses:
+        '200':
+          description: Successfully retrieved books
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookDTO'
+
+  /books/{id}:
+    get:
+      summary: Retrieve a specific book by ID
+      tags:
+        - Books
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved book
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDTO'
+        '404':
+          description: Book not found
+
+    put:
+      summary: Update an existing book
+      tags:
+        - Books
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookDTO'
+      responses:
+        '200':
+          description: Book updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDTO'
+        '400':
+          description: Invalid input
+        '404':
+          description: Book not found
+
+    delete:
+      summary: Delete a book
+      tags:
+        - Books
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Book deleted successfully
+        '404':
+          description: Book not found
+
+  /books/{id}/request-approval:
+    patch:
+      summary: Request approval for a book
+      tags:
+        - Books
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statusDescription:
+                  type: string
+                  description: Optional description for the approval request
+      responses:
+        '200':
+          description: Approval requested successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDTO'
+        '404':
+          description: Book not found
+
+  /books/{id}/approve:
+    patch:
+      summary: Approve a book
+      tags:
+        - Books
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statusDescription:
+                  type: string
+                  description: Optional description for the approval
+      responses:
+        '200':
+          description: Book approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDTO'
+        '404':
+          description: Book not found
+
+  /books/{id}/reject:
+    patch:
+      summary: Reject a book
+      tags:
+        - Books
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statusDescription:
+                  type: string
+                  description: Reason for rejection
+      responses:
+        '200':
+          description: Book rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDTO'
+        '404':
+          description: Book not found

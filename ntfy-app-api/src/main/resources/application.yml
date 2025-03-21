@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: ntfy-app-api
+  profiles:
+    active: dev
+
+server:
+  port: 8080
+  undertow:
+    threads:
+      io: 4
+      worker: 4

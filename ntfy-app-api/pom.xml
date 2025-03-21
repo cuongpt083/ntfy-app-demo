@@ -35,6 +35,16 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-undertow</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-tracing-bridge-brave</artifactId>
         </dependency>
@@ -100,6 +110,15 @@
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.5.5.Final</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -112,6 +131,16 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>1.5.5.Final</version>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok-mapstruct-binding</artifactId>
+                            <version>0.2.0</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -141,13 +170,17 @@
                         </goals>
                         <phase>generate-sources</phase>
                         <configuration>
-                            <skip>true</skip>
-                            <inputSpec>${project.basedir}/src/main/resources/ntfy_apis.json</inputSpec>
+                            <skip>false</skip>
+                            <inputSpec>${project.basedir}/src/main/resources/ntfy_apis.yml</inputSpec>
                             <generatorName>spring</generatorName>
                             <output>${project.basedir}</output>
                             <configOptions>
                                 <useJakartaEe>true</useJakartaEe>
                                 <delegatePattern>true</delegatePattern>
+                                <!-- Generate only interfaces -->
+                                <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
+                                <apiFirst>true</apiFirst>
                                 <additionalModelTypeAnnotations>
                                     @lombok.Builder
                                     @lombok.Data

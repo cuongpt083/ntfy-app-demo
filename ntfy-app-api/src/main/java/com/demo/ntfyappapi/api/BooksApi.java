@@ -5,9 +5,11 @@
  */
 package com.demo.ntfyappapi.api;
 
-import com.demo.ntfyappapi.controller.BooksApiDelegate;
-import com.demo.ntfyappapi.dao.entity.BookEntity;
-import com.demo.ntfyappapi.dto.request.BookRequest;
+import com.demo.ntfyappapi.dto.BookDTO;
+import com.demo.ntfyappapi.dto.BookStatus;
+import com.demo.ntfyappapi.dto.request.BooksIdApprovePatchRequest;
+import com.demo.ntfyappapi.dto.request.BooksIdRejectPatchRequest;
+import com.demo.ntfyappapi.dto.request.BooksIdRequestApprovalPatchRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -22,13 +24,13 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
-import java.util.List;
-
 import jakarta.annotation.Generated;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2025-03-21T11:07:15.924603100+07:00[Asia/Bangkok]", comments = "Generator version: 7.7.0")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2025-03-21T17:06:44.498786400+07:00[Asia/Bangkok]", comments = "Generator version: 7.7.0")
 @Validated
-@Tag(name = "books", description = "the books API")
+@Tag(name = "Books", description = "Book management operations")
 public interface BooksApi {
 
     default BooksApiDelegate getDelegate() {
@@ -36,107 +38,18 @@ public interface BooksApi {
     }
 
     /**
-     * POST /books/{id}/approve : Approve a book for publishing
+     * GET /books : Retrieve all books
      *
-     * @param id  (required)
-     * @return Book approved and published (status code 200)
-     *         or Book not found (status code 404)
-     *         or Book already published (status code 409)
+     * @param status Filter books by status (optional)
+     * @return Successfully retrieved books (status code 200)
      */
     @Operation(
-        operationId = "approveBook",
-        summary = "Approve a book for publishing",
+        operationId = "booksGet",
+        summary = "Retrieve all books",
+        tags = { "Books" },
         responses = {
-            @ApiResponse(responseCode = "200", description = "Book approved and published", content = {
-                @Content(mediaType = "application/json", schema = @Schema(implementation = BookEntity.class))
-            }),
-            @ApiResponse(responseCode = "404", description = "Book not found"),
-            @ApiResponse(responseCode = "409", description = "Book already published")
-        }
-    )
-    @RequestMapping(
-        method = RequestMethod.POST,
-        value = "/books/{id}/approve",
-        produces = { "application/json" }
-    )
-    
-    default ResponseEntity<BookEntity> approveBook(
-        @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") Long id
-    ) {
-        return getDelegate().approveBook(id);
-    }
-
-
-    /**
-     * POST /books : Create a new book
-     *
-     * @param bookRequest  (required)
-     * @return Book created successfully (status code 201)
-     *         or Invalid input (status code 400)
-     */
-    @Operation(
-        operationId = "createBook",
-        summary = "Create a new book",
-        responses = {
-            @ApiResponse(responseCode = "201", description = "Book created successfully", content = {
-                @Content(mediaType = "application/json", schema = @Schema(implementation = BookEntity.class))
-            }),
-            @ApiResponse(responseCode = "400", description = "Invalid input")
-        }
-    )
-    @RequestMapping(
-        method = RequestMethod.POST,
-        value = "/books",
-        produces = { "application/json" },
-        consumes = { "application/json" }
-    )
-    
-    default ResponseEntity<BookEntity> createBook(
-        @Parameter(name = "BookRequest", description = "", required = true) @Valid @RequestBody BookRequest bookRequest
-    ) {
-        return getDelegate().createBook(bookRequest);
-    }
-
-
-    /**
-     * DELETE /books/{id} : Delete a book
-     *
-     * @param id  (required)
-     * @return Book deleted (status code 204)
-     *         or Book not found (status code 404)
-     */
-    @Operation(
-        operationId = "deleteBook",
-        summary = "Delete a book",
-        responses = {
-            @ApiResponse(responseCode = "204", description = "Book deleted"),
-            @ApiResponse(responseCode = "404", description = "Book not found")
-        }
-    )
-    @RequestMapping(
-        method = RequestMethod.DELETE,
-        value = "/books/{id}"
-    )
-    
-    default ResponseEntity<Void> deleteBook(
-        @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") Long id
-    ) {
-        return getDelegate().deleteBook(id);
-    }
-
-
-    /**
-     * GET /books : Get all books
-     *
-     * @param isPublished Filter books by published status (optional)
-     * @return List of books (status code 200)
-     */
-    @Operation(
-        operationId = "getAllBooks",
-        summary = "Get all books",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "List of books", content = {
-                @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = BookEntity.class)))
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved books", content = {
+                @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = BookDTO.class)))
             })
         }
     )
@@ -146,26 +59,89 @@ public interface BooksApi {
         produces = { "application/json" }
     )
     
-    default ResponseEntity<List<BookEntity>> getAllBooks(
-        @Parameter(name = "isPublished", description = "Filter books by published status", in = ParameterIn.QUERY) @Valid @RequestParam(value = "isPublished", required = false) Boolean isPublished
+    default Flux<ResponseEntity<BookDTO>> booksGet(
+        @Parameter(name = "status", description = "Filter books by status", in = ParameterIn.QUERY) @Valid @RequestParam(value = "status", required = false) BookStatus status
     ) {
-        return getDelegate().getAllBooks(isPublished);
+        return getDelegate().booksGet(status);
     }
 
 
     /**
-     * GET /books/{id} : Get a book by ID
+     * PATCH /books/{id}/approve : Approve a book
      *
      * @param id  (required)
-     * @return Book found (status code 200)
+     * @param booksIdApprovePatchRequest  (optional)
+     * @return Book approved successfully (status code 200)
      *         or Book not found (status code 404)
      */
     @Operation(
-        operationId = "getBookById",
-        summary = "Get a book by ID",
+        operationId = "booksIdApprovePatch",
+        summary = "Approve a book",
+        tags = { "Books" },
         responses = {
-            @ApiResponse(responseCode = "200", description = "Book found", content = {
-                @Content(mediaType = "application/json", schema = @Schema(implementation = BookEntity.class))
+            @ApiResponse(responseCode = "200", description = "Book approved successfully", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = BookDTO.class))
+            }),
+            @ApiResponse(responseCode = "404", description = "Book not found")
+        }
+    )
+    @RequestMapping(
+        method = RequestMethod.PATCH,
+        value = "/books/{id}/approve",
+        produces = { "application/json" },
+        consumes = { "application/json" }
+    )
+    
+    default Mono<ResponseEntity<BookDTO>> booksIdApprovePatch(
+        @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") String id,
+        @Parameter(name = "BooksIdApprovePatchRequest", description = "") @Valid @RequestBody(required = false) BooksIdApprovePatchRequest booksIdApprovePatchRequest
+    ) {
+        return getDelegate().booksIdApprovePatch(id, booksIdApprovePatchRequest);
+    }
+
+
+    /**
+     * DELETE /books/{id} : Delete a book
+     *
+     * @param id  (required)
+     * @return Book deleted successfully (status code 204)
+     *         or Book not found (status code 404)
+     */
+    @Operation(
+        operationId = "booksIdDelete",
+        summary = "Delete a book",
+        tags = { "Books" },
+        responses = {
+            @ApiResponse(responseCode = "204", description = "Book deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Book not found")
+        }
+    )
+    @RequestMapping(
+        method = RequestMethod.DELETE,
+        value = "/books/{id}"
+    )
+    
+    default Mono<ResponseEntity<Void>> booksIdDelete(
+        @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") String id
+    ) {
+        return getDelegate().booksIdDelete(id);
+    }
+
+
+    /**
+     * GET /books/{id} : Retrieve a specific book by ID
+     *
+     * @param id  (required)
+     * @return Successfully retrieved book (status code 200)
+     *         or Book not found (status code 404)
+     */
+    @Operation(
+        operationId = "booksIdGet",
+        summary = "Retrieve a specific book by ID",
+        tags = { "Books" },
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved book", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = BookDTO.class))
             }),
             @ApiResponse(responseCode = "404", description = "Book not found")
         }
@@ -176,60 +152,29 @@ public interface BooksApi {
         produces = { "application/json" }
     )
     
-    default ResponseEntity<BookEntity> getBookById(
-        @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") Long id
+    default Mono<ResponseEntity<BookDTO>> booksIdGet(
+        @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") String id
     ) {
-        return getDelegate().getBookById(id);
+        return getDelegate().booksIdGet(id);
     }
 
 
     /**
-     * POST /books/{id}/request-approval : Request approval for a book
+     * PUT /books/{id} : Update an existing book
      *
      * @param id  (required)
-     * @return Approval requested (status code 200)
-     *         or Book not found (status code 404)
-     *         or Book already published (status code 409)
-     */
-    @Operation(
-        operationId = "requestApproval",
-        summary = "Request approval for a book",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Approval requested", content = {
-                @Content(mediaType = "application/json", schema = @Schema(implementation = BookEntity.class))
-            }),
-            @ApiResponse(responseCode = "404", description = "Book not found"),
-            @ApiResponse(responseCode = "409", description = "Book already published")
-        }
-    )
-    @RequestMapping(
-        method = RequestMethod.POST,
-        value = "/books/{id}/request-approval",
-        produces = { "application/json" }
-    )
-    
-    default ResponseEntity<BookEntity> requestApproval(
-        @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") Long id
-    ) {
-        return getDelegate().requestApproval(id);
-    }
-
-
-    /**
-     * PUT /books/{id} : Update a book
-     *
-     * @param id  (required)
-     * @param bookRequest  (required)
-     * @return Book updated (status code 200)
+     * @param bookDTO  (required)
+     * @return Book updated successfully (status code 200)
      *         or Invalid input (status code 400)
      *         or Book not found (status code 404)
      */
     @Operation(
-        operationId = "updateBook",
-        summary = "Update a book",
+        operationId = "booksIdPut",
+        summary = "Update an existing book",
+        tags = { "Books" },
         responses = {
-            @ApiResponse(responseCode = "200", description = "Book updated", content = {
-                @Content(mediaType = "application/json", schema = @Schema(implementation = BookEntity.class))
+            @ApiResponse(responseCode = "200", description = "Book updated successfully", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = BookDTO.class))
             }),
             @ApiResponse(responseCode = "400", description = "Invalid input"),
             @ApiResponse(responseCode = "404", description = "Book not found")
@@ -242,11 +187,111 @@ public interface BooksApi {
         consumes = { "application/json" }
     )
     
-    default ResponseEntity<BookEntity> updateBook(
-        @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") Long id,
-        @Parameter(name = "BookRequest", description = "", required = true) @Valid @RequestBody BookRequest bookRequest
+    default Mono<ResponseEntity<BookDTO>> booksIdPut(
+        @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") String id,
+        @Parameter(name = "BookDTO", description = "", required = true) @Valid @RequestBody BookDTO bookDTO
     ) {
-        return getDelegate().updateBook(id, bookRequest);
+        return getDelegate().booksIdPut(id, bookDTO);
+    }
+
+
+    /**
+     * PATCH /books/{id}/reject : Reject a book
+     *
+     * @param id  (required)
+     * @param booksIdRejectPatchRequest  (optional)
+     * @return Book rejected successfully (status code 200)
+     *         or Book not found (status code 404)
+     */
+    @Operation(
+        operationId = "booksIdRejectPatch",
+        summary = "Reject a book",
+        tags = { "Books" },
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Book rejected successfully", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = BookDTO.class))
+            }),
+            @ApiResponse(responseCode = "404", description = "Book not found")
+        }
+    )
+    @RequestMapping(
+        method = RequestMethod.PATCH,
+        value = "/books/{id}/reject",
+        produces = { "application/json" },
+        consumes = { "application/json" }
+    )
+    
+    default Mono<ResponseEntity<BookDTO>> booksIdRejectPatch(
+        @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") String id,
+        @Parameter(name = "BooksIdRejectPatchRequest", description = "") @Valid @RequestBody(required = false) BooksIdRejectPatchRequest booksIdRejectPatchRequest
+    ) {
+        return getDelegate().booksIdRejectPatch(id, booksIdRejectPatchRequest);
+    }
+
+
+    /**
+     * PATCH /books/{id}/request-approval : Request approval for a book
+     *
+     * @param id  (required)
+     * @param booksIdRequestApprovalPatchRequest  (optional)
+     * @return Approval requested successfully (status code 200)
+     *         or Book not found (status code 404)
+     */
+    @Operation(
+        operationId = "booksIdRequestApprovalPatch",
+        summary = "Request approval for a book",
+        tags = { "Books" },
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Approval requested successfully", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = BookDTO.class))
+            }),
+            @ApiResponse(responseCode = "404", description = "Book not found")
+        }
+    )
+    @RequestMapping(
+        method = RequestMethod.PATCH,
+        value = "/books/{id}/request-approval",
+        produces = { "application/json" },
+        consumes = { "application/json" }
+    )
+    
+    default Mono<ResponseEntity<BookDTO>> booksIdRequestApprovalPatch(
+        @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") String id,
+        @Parameter(name = "BooksIdRequestApprovalPatchRequest", description = "") @Valid @RequestBody(required = false) BooksIdRequestApprovalPatchRequest booksIdRequestApprovalPatchRequest
+    ) {
+        return getDelegate().booksIdRequestApprovalPatch(id, booksIdRequestApprovalPatchRequest);
+    }
+
+
+    /**
+     * POST /books : Create a new book
+     *
+     * @param bookDTO  (required)
+     * @return Book created successfully (status code 201)
+     *         or Invalid input (status code 400)
+     */
+    @Operation(
+        operationId = "booksPost",
+        summary = "Create a new book",
+        tags = { "Books" },
+        responses = {
+            @ApiResponse(responseCode = "201", description = "Book created successfully", content = {
+                @Content(mediaType = "application/json", schema = @Schema(implementation = BookDTO.class))
+            }),
+            @ApiResponse(responseCode = "400", description = "Invalid input")
+        }
+    )
+    @RequestMapping(
+        method = RequestMethod.POST,
+        value = "/books",
+        produces = { "application/json" },
+        consumes = { "application/json" }
+    )
+    
+    default Mono<ResponseEntity<BookDTO>> booksPost(
+        @Parameter(name = "BookDTO", description = "", required = true) @Valid @RequestBody BookDTO bookDTO
+    ) {
+        return getDelegate().booksPost(bookDTO);
     }
 
 }

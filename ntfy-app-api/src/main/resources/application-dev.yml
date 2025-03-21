@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: ntfy-app-api
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    open-in-view: false
+    #database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        hibernate.default_schema = ntfy_app
+  datasource:
+    driver-class-name: org.postgresql.Driver
+  #driver-class-name: org.h2.Driver
+    #url: jdbc:h2:mem:testdb
+    #username: sa
+    #password: password
+    url: jdbc:postgresql://192.168.10.32:5432/demo_api
+    hikari:
+      username: demo
+      password: Demo2025
+      maximum-pool-size: 10
+      idle-timeout: 300000
+      max-lifetime: 600000
+      connection-timeout: 30000
+      leak-detection-threshold: 200
+      validation-timeout: 300
+

@@ -1,15 +1,17 @@
 package com.demo.ntfyappapi.dao.entity;
 
+import com.demo.ntfyappapi.dto.BookStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.DiscriminatorFormula;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 @Entity
 @Data
-@Table(name = "book")
+@Table(name = "book", schema = "ntfy_app")
 @DiscriminatorFormula("'Book'")
 public class BookEntity implements Serializable,Cloneable {
     @Id
@@ -19,6 +21,9 @@ public class BookEntity implements Serializable,Cloneable {
     @Column(name = "title", nullable = false)
     private String title;
 
+    @Column(name = "isbn", nullable = false, unique = true)
+    private String isbn;
+
     @Column(name="desc", nullable = false)
     private String description;
 
@@ -26,13 +31,31 @@ public class BookEntity implements Serializable,Cloneable {
     private Boolean isPublished = false;
 
     @Column(name = "status", nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private BookStatus status;
+
+    @Column(name = "status_desc", nullable = false)
+    private String statusDescription;
 
     @Column(name = "created_at",nullable = false)
-    private OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
+    private LocalDateTime updatedAt;
+
+    public BookEntity(){
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PrePersist
+    protected void onCreate(){
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate(){
+        this.updatedAt = LocalDateTime.now();
+    }
 
     @Override
     public BookEntity clone() {
