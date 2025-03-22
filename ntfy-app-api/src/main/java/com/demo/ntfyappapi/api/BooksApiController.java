@@ -1,6 +1,7 @@
 package com.demo.ntfyappapi.api;
 
 
+import com.demo.ntfyappapi.controller.BooksApiDelegate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;

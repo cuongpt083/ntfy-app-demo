@@ -1,29 +1,29 @@
 package com.demo.ntfyappapi.controller;
 
-import com.demo.ntfyappapi.api.BooksApiDelegate;
+import com.demo.ntfyappapi.dao.entity.BookEntity;
+import com.demo.ntfyappapi.dao.repository.BookRepository;
 import com.demo.ntfyappapi.dto.BookDTO;
 import com.demo.ntfyappapi.dto.BookStatus;
 import com.demo.ntfyappapi.dto.request.BooksIdApprovePatchRequest;
 import com.demo.ntfyappapi.dto.request.BooksIdRejectPatchRequest;
 import com.demo.ntfyappapi.dto.request.BooksIdRequestApprovalPatchRequest;
-import com.demo.ntfyappapi.exception.GeneralException;
 import com.demo.ntfyappapi.mapper.BookMapper;
 import com.demo.ntfyappapi.service.BookService;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
+import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.validation.constraints.NotNull;
-import java.time.Duration;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class BooksApiDelegateImpl implements BooksApiDelegate {
@@ -32,12 +32,14 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
 
     @Autowired
     private BookMapper bookMapper;
-
     @Autowired
-    private Validator validator;
+    private BookRepository bookRepository;
+
+    /*@Autowired
+    private Validator validator;*/
 
 
-    public Mono<ResponseEntity<BookDTO>> booksPost(@Valid BookDTO bookDTO) {
+    public Mono<ResponseEntity<BookDTO>> booksPost(BookDTO bookDTO) {
         return bookService.getBookById(bookDTO.getId())
                 .flatMap(existingBook -> Mono.just(ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(existingBook)))
@@ -51,13 +53,35 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
     }
 
     /**
+     * Fetch all books
+     * */
+    public Flux<ResponseEntity<BookDTO>> booksGetAll(int page, int size, String sort){
+        PageRequest pageRequest = PageRequest.of(
+                page,
+                size,
+                sort != null ? createSort(sort) : Sort.by(Sort.Direction.ASC, "title")
+        );
+
+        Page<BookEntity> bookEntityPage = bookRepository.findAll(pageRequest);
+        List<BookDTO> bookDTOList = bookEntityPage.getContent().stream()
+                .map(Mapper)
+                .collect(Collectors.toList());
+        return bookService.getAllBooks()
+                .map(ResponseEntity::ok)
+                .onErrorResume(err -> {
+                    // log.error("Error message", err);
+                    return Flux.empty() ;
+                });
+    }
+
+    /**
      * Fetch books match status
      * */
     /*public ResponseEntity<List<BookDTO>> booksGet(@Valid BookStatus status){
         List<BookDTO> bookDTOList = bookService.getAllBooksByStatus(status).collectList().block(Duration.ofMinutes(1));
         return ResponseEntity.ok(bookDTOList);
     }*/
-    public Flux<ResponseEntity<BookDTO>> booksGet(@Valid BookStatus status){
+    public Flux<ResponseEntity<BookDTO>> booksGetByStatus(@Valid BookStatus status){
         return bookService.getAllBooksByStatus(status)
                 .map(ResponseEntity::ok)
                 .onErrorResume(err -> {
@@ -65,6 +89,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
                     return Flux.empty() ;
                 });
     }
+
 
     // Demo if you want to maintain ResponseEntity inside Flux
     /*public Flux<ResponseEntity<BookDTO>> booksGet(@Valid BookStatus status){

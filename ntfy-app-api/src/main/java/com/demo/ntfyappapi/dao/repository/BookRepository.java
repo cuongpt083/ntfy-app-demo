@@ -10,11 +10,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-@EnableJpaRepositories(
-        basePackages = "com.demo.ntfyappapi.dao.repository.entity",
-        entityManagerFactoryRef = "entityManagerFactory",
-        transactionManagerRef = "transactionManager"
-)
 public interface BookRepository extends JpaRepository<BookEntity, Long> {
     List<BookEntity> findAllByIsPublished(Boolean isPublished);
     List<BookEntity> findAllByStatus(BookStatus status);
@@ -22,5 +17,5 @@ public interface BookRepository extends JpaRepository<BookEntity, Long> {
 
     List<BookEntity> findAllByIsbn(String isbn);
 
-    void delete(String id) ;
+    void deleteById(Long id) ;
 }

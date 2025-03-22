@@ -5,6 +5,7 @@
  */
 package com.demo.ntfyappapi.api;
 
+import com.demo.ntfyappapi.controller.BooksApiDelegate;
 import com.demo.ntfyappapi.dto.BookDTO;
 import com.demo.ntfyappapi.dto.BookStatus;
 import com.demo.ntfyappapi.dto.request.BooksIdApprovePatchRequest;

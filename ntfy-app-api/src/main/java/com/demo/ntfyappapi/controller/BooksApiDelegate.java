@@ -1,5 +1,8 @@
-package com.demo.ntfyappapi.api;
+package com.demo.ntfyappapi.controller;
 
+import com.demo.ntfyappapi.api.ApiUtil;
+import com.demo.ntfyappapi.api.BooksApi;
+import com.demo.ntfyappapi.api.BooksApiController;
 import com.demo.ntfyappapi.dto.BookDTO;
 import com.demo.ntfyappapi.dto.BookStatus;
 import com.demo.ntfyappapi.dto.request.BooksIdApprovePatchRequest;
@@ -10,7 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.NativeWebRequest;
 
-import java.util.List;
 import java.util.Optional;
 import jakarta.annotation.Generated;
 import reactor.core.publisher.Flux;
@@ -34,7 +36,21 @@ public interface BooksApiDelegate {
      * @return Successfully retrieved books (status code 200)
      * @see BooksApi#booksGet
      */
-    default Flux<ResponseEntity<BookDTO>> booksGet(BookStatus status) {
+    default Flux<ResponseEntity<BookDTO>> booksGetByStatus(BookStatus status) {
+        getRequest().ifPresent(request -> {
+            for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
+                if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
+                    String exampleString = "[ { \"createdAt\" : \"2000-01-23T04:56:07.000+00:00\", \"statusDescription\" : \"statusDescription\", \"isbn\" : \"isbn\", \"description\" : \"description\", \"id\" : \"id\", \"title\" : \"title\", \"status\" : \"DRAFT\", \"updatedAt\" : \"2000-01-23T04:56:07.000+00:00\" }, { \"createdAt\" : \"2000-01-23T04:56:07.000+00:00\", \"statusDescription\" : \"statusDescription\", \"isbn\" : \"isbn\", \"description\" : \"description\", \"id\" : \"id\", \"title\" : \"title\", \"status\" : \"DRAFT\", \"updatedAt\" : \"2000-01-23T04:56:07.000+00:00\" } ]";
+                    ApiUtil.setExampleResponse(request, "application/json", exampleString);
+                    break;
+                }
+            }
+        });
+        return Flux.just(ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null));
+
+    }
+
+    default Flux<ResponseEntity<BookDTO>> booksGetAll(int page, int size, String sort) {
         getRequest().ifPresent(request -> {
             for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
                 if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {

@@ -7,11 +7,15 @@ import com.demo.ntfyappapi.dto.BookDTO;
 import com.demo.ntfyappapi.exception.BookNotFoundException;
 import com.demo.ntfyappapi.mapper.BookMapper;
 import com.demo.ntfyappapi.service.BookService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.List;
 
 @Service
 @lombok.RequiredArgsConstructor
@@ -27,7 +31,7 @@ public class BookServiceImpl implements BookService {
     public Mono<BookDTO> createBook(BookDTO bookDTO) {
         BookEntity bookEntity = bookMapper.dtoToEntity(bookDTO);
         bookEntity.setStatus(BookStatus.DRAFT);
-        bookEntity.setCreatedAt(LocalDateTime.now());
+        bookEntity.setCreatedAt(ZonedDateTime.now());
 
         return Mono.fromCallable(() -> bookRepository.save(bookEntity))
             .map(bookMapper::entityToDto)
@@ -53,8 +57,15 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Flux<BookDTO> getAllBooks() {
-        return Flux.fromIterable(bookRepository.findAll())
+    public Flux<BookDTO> getAllBooks(int page, int size, String sort) {
+        PageRequest pageRequest = PageRequest.of(
+                page,
+                size,
+                sort != null ? createSort(soft) : Sort.by(Sort.Direction.ASC, "title")
+        );
+        Page<BookEntity> bookEntityPage = bookRepository.findAll(pageRequest);
+        List<BookDTO> bookDTOList
+        return Flux.fromIterable(bookEntityPage.getContent().stream())
                 .map(bookMapper::entityToDto);
     }
 
@@ -78,7 +89,7 @@ public class BookServiceImpl implements BookService {
             existingBook.setTitle(bookDTO.getTitle());
             existingBook.setDescription(bookDTO.getDescription());
             existingBook.setIsbn(bookDTO.getIsbn());
-            existingBook.setUpdatedAt(LocalDateTime.now());
+            existingBook.setUpdatedAt(ZonedDateTime.now());
 
             return bookRepository.save(existingBook);
         }).map(bookMapper::entityToDto);
@@ -89,7 +100,7 @@ public class BookServiceImpl implements BookService {
         return Mono.fromRunnable(() -> {
             BookEntity book = bookRepository.findById(Long.valueOf(id))
                     .orElseThrow(() -> new BookNotFoundException("Book not found with id: " + id));
-            bookRepository.delete(book);
+            bookRepository.deleteById(Long.valueOf(id));
         });
     }
 
@@ -104,7 +115,7 @@ public class BookServiceImpl implements BookService {
             BookEntity book = bookRepository.findById(Long.valueOf(id)).orElseThrow(() -> new BookNotFoundException("Book not found with id: " + id));
             book.setStatus(BookStatus.PENDING_APPROVAL);
             book.setStatusDescription(String.valueOf(bookDTO.getStatusDescription()));
-            book.setUpdatedAt(LocalDateTime.now());
+            book.setUpdatedAt(ZonedDateTime.now());
             return bookRepository.save(book);
         }).map(bookMapper::entityToDto);
     }
@@ -121,7 +132,7 @@ public class BookServiceImpl implements BookService {
                     .orElseThrow(() -> new BookNotFoundException("Book not found with id: " + id));
             book.setStatus(BookStatus.APPROVED);
             book.setStatusDescription(String.valueOf(bookDTO.getStatusDescription()));
-            book.setUpdatedAt(LocalDateTime.now());
+            book.setUpdatedAt(ZonedDateTime.now());
             return bookRepository.save(book);
         }).map(bookMapper::entityToDto);
     }
@@ -144,7 +155,7 @@ public class BookServiceImpl implements BookService {
 
             book.setStatus(BookStatus.PENDING_APPROVAL);
             book.setStatusDescription(statusDescription);
-            book.setUpdatedAt(LocalDateTime.now());
+            book.setUpdatedAt(ZonedDateTime.now());
 
             return bookRepository.save(book);
         }).map(bookMapper::entityToDto);
@@ -158,7 +169,7 @@ public class BookServiceImpl implements BookService {
 
             book.setStatus(BookStatus.APPROVED);
             book.setStatusDescription(book.getDescription() + " -> " + statusDescription);
-            book.setUpdatedAt(LocalDateTime.now());
+            book.setUpdatedAt(ZonedDateTime.now());
 
             return bookRepository.save(book);
         }).map(bookMapper::entityToDto);
@@ -172,7 +183,7 @@ public class BookServiceImpl implements BookService {
 
             book.setStatus(BookStatus.REJECTED);
             book.setStatusDescription(book.getStatusDescription() + " -> " +statusDescription);
-            book.setUpdatedAt(LocalDateTime.now());
+            book.setUpdatedAt(ZonedDateTime.now());
 
             return bookRepository.save(book);
         }).map(bookMapper::entityToDto);

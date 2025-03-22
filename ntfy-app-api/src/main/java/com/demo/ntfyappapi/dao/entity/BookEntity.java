@@ -8,6 +8,7 @@ import org.hibernate.annotations.DiscriminatorFormula;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 
 @Entity
 @Data
@@ -24,7 +25,7 @@ public class BookEntity implements Serializable,Cloneable {
     @Column(name = "isbn", nullable = false, unique = true)
     private String isbn;
 
-    @Column(name="desc", nullable = false)
+    @Column(name="description", nullable = false)
     private String description;
 
     @Column(name = "is_published")
@@ -38,23 +39,23 @@ public class BookEntity implements Serializable,Cloneable {
     private String statusDescription;
 
     @Column(name = "created_at",nullable = false)
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private ZonedDateTime updatedAt;
 
     public BookEntity(){
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = ZonedDateTime.now();
     }
 
     @PrePersist
     protected void onCreate(){
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = ZonedDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate(){
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = ZonedDateTime.now();
     }
 
     @Override

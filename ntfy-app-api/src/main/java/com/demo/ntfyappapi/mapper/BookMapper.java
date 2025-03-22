@@ -7,6 +7,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
+import java.time.ZonedDateTime;
+
 @Mapper(componentModel = "spring")
 public interface BookMapper {
     BookMapper INSTANCE = Mappers.getMapper(BookMapper.class);
@@ -14,7 +16,7 @@ public interface BookMapper {
     // Mapping from BookReq to BookEntity
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", constant = "DRAFT")
-    @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
+    @Mapping(target = "createdAt", expression = "java(java.time.ZonedDateTime.now())")
     BookEntity requestToEntity(BookPostRequest bookReq);
 
     // Mapping from BookEntity to BookDTO

@@ -1,6 +1,7 @@
 package com.demo.ntfyappapi.dto;
 
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -32,10 +33,10 @@ public class BookDTO {
   private String statusDescription = "";
 
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-  private OffsetDateTime createdAt;
+  private ZonedDateTime createdAt;
 
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-  private OffsetDateTime updatedAt;
+  private ZonedDateTime updatedAt;
 
 }
 
