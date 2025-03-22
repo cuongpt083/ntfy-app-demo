@@ -17,49 +17,53 @@ public class BookController implements BooksApi {
     @Autowired
     private BooksApiDelegate delegate;
 
-    @PostMapping(value = "/api/books")
+    @PostMapping(value = "/books")
     public Mono<ResponseEntity<BookDTO>> createBook(@RequestBody BookDTO bookDTO){
         return delegate.booksPost(bookDTO);
     }
 
-    @GetMapping(value = "/api/books")
+    /*@GetMapping(value = "/books")
     public Flux<ResponseEntity<BookDTO>> getAllBooks(@RequestParam(defaultValue = "0") int page,
                                                      @RequestParam(defaultValue = "5") int size,
                                                      @RequestParam(required = false) String sort ){
         return delegate.booksGetAll(page, size, sort);
+    }*/
+    @GetMapping(value = "/books")
+    public Flux<ResponseEntity<BookDTO>> getAllBooks() {
+        return delegate.booksGetAll();
     }
 
-    @GetMapping(value = "/api/books/{status}")
+    @GetMapping(value = "/books/{status}")
     public Flux<ResponseEntity<BookDTO>> getAllBooksByStatus(@PathVariable String status) {
-        return delegate.booksGetByStatus(BookStatus.valueOf(status));
+        return delegate.booksStatusGet(BookStatus.valueOf(status));
     }
 
-    @PutMapping(value = "/api/books/{id}")
+    @PutMapping(value = "/books/{id}")
     public Mono<ResponseEntity<BookDTO>> updateBook(@PathVariable String id, @RequestBody BookDTO bookDTO){
         return delegate.booksIdPut(id, bookDTO);
     }
 
-    @DeleteMapping(value = "/api/books/{id}")
-    public Mono<ResponseEntity<Void>> deleteBook(@PathVariable String id) {
+/*    @DeleteMapping(value = "/books/{id}")
+    public Mono<ResponseEntity<Void>> deleteBookById(@PathVariable String id) {
         return delegate.booksIdDelete(id);
-    }
+    }*/
 
-    @GetMapping(value = "/api/books/{id}")
+    @GetMapping(value = "/books/{id}")
     public Mono<ResponseEntity<BookDTO>> getBookById(@PathVariable String id) {
         return delegate.booksIdGet(id);
     }
 
-    @PatchMapping(value = "/api/books/{id}/request-approval")
+    @PatchMapping(value = "/books/{id}/request-approval")
     public Mono<ResponseEntity<BookDTO>> requestApproval(@PathVariable String id, @RequestBody BooksIdRequestApprovalPatchRequest request) {
         return delegate.booksIdRequestApprovalPatch(id,request);
     }
 
-    @PatchMapping(value = "/api/books/{id}/approve")
+    @PatchMapping(value = "/books/{id}/approve")
     public Mono<ResponseEntity<BookDTO>> approve(@PathVariable String id, @RequestBody BooksIdApprovePatchRequest request) {
         return delegate.booksIdApprovePatch(id, request);
     }
 
-    @PatchMapping(value = "/api/books/{id}/reject")
+    @PatchMapping(value = "/books/{id}/reject")
     public Mono<ResponseEntity<BookDTO>> reject (@PathVariable String id, @RequestBody BooksIdRejectPatchRequest request) {
         return delegate.booksIdRejectPatch(id, request);
     }

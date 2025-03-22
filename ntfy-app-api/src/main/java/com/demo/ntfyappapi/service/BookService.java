@@ -16,7 +16,7 @@ public interface BookService {
 
     Flux<BookDTO> getAllBooks();
 
-    Flux<BookDTO> getAllBooks(int page, int size, String sort);
+    /*Flux<BookDTO> getAllBooks(int page, int size, String sort);*/
 
     Flux<BookDTO> getAllBooksByStatus(BookStatus status);
 

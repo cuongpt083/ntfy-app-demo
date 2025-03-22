@@ -2,7 +2,6 @@ package com.demo.ntfyappapi.controller;
 
 import com.demo.ntfyappapi.api.ApiUtil;
 import com.demo.ntfyappapi.api.BooksApi;
-import com.demo.ntfyappapi.api.BooksApiController;
 import com.demo.ntfyappapi.dto.BookDTO;
 import com.demo.ntfyappapi.dto.BookStatus;
 import com.demo.ntfyappapi.dto.request.BooksIdApprovePatchRequest;
@@ -19,7 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * A delegate to be called by the {@link BooksApiController}}.
+ * A delegate to be called by the {@link }}.
  * Implement this interface with a {@link org.springframework.stereotype.Service} annotated class.
  */
 @Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2025-03-21T17:06:44.498786400+07:00[Asia/Bangkok]", comments = "Generator version: 7.7.0")
@@ -34,9 +33,9 @@ public interface BooksApiDelegate {
      *
      * @param status Filter books by status (optional)
      * @return Successfully retrieved books (status code 200)
-     * @see BooksApi#booksGet
+     * @see BooksApi#booksStatusGet
      */
-    default Flux<ResponseEntity<BookDTO>> booksGetByStatus(BookStatus status) {
+    default Flux<ResponseEntity<BookDTO>> booksStatusGet(BookStatus status) {
         getRequest().ifPresent(request -> {
             for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
                 if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
@@ -50,7 +49,7 @@ public interface BooksApiDelegate {
 
     }
 
-    default Flux<ResponseEntity<BookDTO>> booksGetAll(int page, int size, String sort) {
+    default Flux<ResponseEntity<BookDTO>> booksGetAll() {
         getRequest().ifPresent(request -> {
             for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
                 if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {

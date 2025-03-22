@@ -38,7 +38,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
     /*@Autowired
     private Validator validator;*/
 
-
+    @Override
     public Mono<ResponseEntity<BookDTO>> booksPost(BookDTO bookDTO) {
         return bookService.getBookById(bookDTO.getId())
                 .flatMap(existingBook -> Mono.just(ResponseEntity.status(HttpStatus.CONFLICT)
@@ -55,7 +55,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
     /**
      * Fetch all books
      * */
-    public Flux<ResponseEntity<BookDTO>> booksGetAll(int page, int size, String sort){
+    /*public Flux<ResponseEntity<BookDTO>> booksGetAll(int page, int size, String sort){
         PageRequest pageRequest = PageRequest.of(
                 page,
                 size,
@@ -72,6 +72,15 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
                     // log.error("Error message", err);
                     return Flux.empty() ;
                 });
+    }*/
+    @Override
+    public Flux<ResponseEntity<BookDTO>> booksGetAll() {
+        return bookService.getAllBooks()
+                .map((ResponseEntity::ok))
+                .onErrorResume(err -> {
+                    // log.error("Error message", err);
+                    return Flux.empty() ;
+                });
     }
 
     /**
@@ -81,7 +90,9 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
         List<BookDTO> bookDTOList = bookService.getAllBooksByStatus(status).collectList().block(Duration.ofMinutes(1));
         return ResponseEntity.ok(bookDTOList);
     }*/
-    public Flux<ResponseEntity<BookDTO>> booksGetByStatus(@Valid BookStatus status){
+    @Override
+    public Flux<ResponseEntity<BookDTO>> booksStatusGet(@Valid BookStatus status){
+        System.out.println("This");
         return bookService.getAllBooksByStatus(status)
                 .map(ResponseEntity::ok)
                 .onErrorResume(err -> {
@@ -103,6 +114,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
     /**
      * Approve book
      * */
+    @Override
     public Mono<ResponseEntity<BookDTO>> booksIdApprovePatch(String id, BooksIdApprovePatchRequest request){
         //BookDTO approvedBook = bookService.approveBook(id,request.getStatusDescription()).block();
         return bookService.approveBook(id,request.getStatusDescription())
@@ -116,6 +128,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
     /**
      * Request Approval book
      * */
+    @Override
     public Mono<ResponseEntity<BookDTO>> booksIdRequestApprovalPatch(String id, BooksIdRequestApprovalPatchRequest request){
         //BookDTO requestedApprovalBook = bookService.requestApproval(id,request.getStatusDescription()).block(Duration.ofSeconds(30));
         return bookService.requestApproval(id, request.getStatusDescription())
@@ -127,7 +140,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
         //return ResponseEntity.ok(requestedApprovalBook);
     }
 
-
+    @Override
     public Mono<ResponseEntity<BookDTO>> booksIdRejectPatch(String id, BooksIdRejectPatchRequest request) {
         //BookDTO rejectedBook = bookService.rejectBook(id,request.getStatusDescription()).block(Duration.ofSeconds(30));
         return bookService.rejectBook(id,request.getStatusDescription())
@@ -139,6 +152,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
         //return ResponseEntity.ok(rejectedBook);
     }
 
+    @Override
     public Mono<ResponseEntity<BookDTO>> booksIdPut(String id, BookDTO book) {
         //BookDTO updatedBook = bookService.updateBook(id, book).block(Duration.ofSeconds(30));
         //return ResponseEntity.ok(updatedBook);
@@ -150,6 +164,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
                 });
     }
 
+    @Override
     public Mono<ResponseEntity<BookDTO>> booksIdGet(String id){
         //BookDTO book = bookService.getBookById(id).block(Duration.ofSeconds(30));
         //return ResponseEntity.ok(book);
@@ -161,6 +176,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
                 });
     }
 
+    @Override
     public Mono<ResponseEntity<Void>> booksIdDelete(String id) {
         //bookService.deleteBook(id).;
         return bookService.deleteBook(id)

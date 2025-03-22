@@ -45,7 +45,7 @@ public interface BooksApi {
      * @return Successfully retrieved books (status code 200)
      */
     @Operation(
-        operationId = "booksGet",
+        operationId = "booksGetByStatus",
         summary = "Retrieve all books",
         tags = { "Books" },
         responses = {
@@ -60,11 +60,12 @@ public interface BooksApi {
         produces = { "application/json" }
     )
     
-    default Flux<ResponseEntity<BookDTO>> booksGet(
+    default Flux<ResponseEntity<BookDTO>> booksStatusGet(
         @Parameter(name = "status", description = "Filter books by status", in = ParameterIn.QUERY) @Valid @RequestParam(value = "status", required = false) BookStatus status
     ) {
-        return getDelegate().booksGet(status);
+        return getDelegate().booksStatusGet(status);
     }
+
 
 
     /**
