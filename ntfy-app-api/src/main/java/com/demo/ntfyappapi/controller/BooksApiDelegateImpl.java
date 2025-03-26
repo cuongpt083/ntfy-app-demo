@@ -40,14 +40,25 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
 
     @Override
     public Mono<ResponseEntity<BookDTO>> booksPost(BookDTO bookDTO) {
+        // Skip ID check if ID is null (new book with auto-generated ID)
+        if(bookDTO.getId() == null) {
+            return bookService.createBook(bookDTO)
+                    .map(savedBook -> ResponseEntity.status(HttpStatus.CREATED).body(savedBook));
+        }
+        // Check if book with the same ID already exists
         return bookService.getBookById(bookDTO.getId())
-                .flatMap(existingBook -> Mono.just(ResponseEntity.status(HttpStatus.CONFLICT)
+                .flatMap(existingBook ->
+                        // If exists, return Error
+                        Mono.just(ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(existingBook)))
-                .switchIfEmpty(bookService.createBook(bookDTO)
+                .switchIfEmpty(
+                        // If doesn't exist, create new book
+                        bookService.createBook(bookDTO)
                         .map(savedBook -> ResponseEntity.status(HttpStatus.CREATED).body(savedBook))
                 )
                 .onErrorResume(err -> {
                     //log.error("Error creating book",err);
+                    //err.printStackTrace();
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null));
                 });
     }
@@ -75,9 +86,12 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
     }*/
     @Override
     public Flux<ResponseEntity<BookDTO>> booksGetAll() {
-        return bookService.getAllBooks()
+        Flux<BookDTO> allBooks = bookService.getAllBooks();
+
+        return allBooks
                 .map((ResponseEntity::ok))
                 .onErrorResume(err -> {
+                    err.printStackTrace();
                     // log.error("Error message", err);
                     return Flux.empty() ;
                 });

@@ -3,7 +3,8 @@ spring:
     name: ntfy-app-api
   profiles:
     active: dev
-
+  webflux:
+    base-path: /api/v1
 server:
   port: 8080
   undertow:

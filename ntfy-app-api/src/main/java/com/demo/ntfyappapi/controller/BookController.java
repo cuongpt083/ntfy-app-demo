@@ -12,13 +12,27 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
+
 @RestController
+@RequestMapping
 public class BookController implements BooksApi {
-    @Autowired
-    private BooksApiDelegate delegate;
+
+    private final BooksApiDelegate delegate;
+
+    public BookController(@Autowired(required = false) BooksApiDelegate delegate) {
+        this.delegate = Optional.ofNullable(delegate).orElse(new BooksApiDelegate() {
+        });
+    }
+
+    @Override
+    public BooksApiDelegate getDelegate() {
+        return delegate;
+    }
 
     @PostMapping(value = "/books")
     public Mono<ResponseEntity<BookDTO>> createBook(@RequestBody BookDTO bookDTO){
+        System.out.println("This is created ...");
         return delegate.booksPost(bookDTO);
     }
 
@@ -28,13 +42,9 @@ public class BookController implements BooksApi {
                                                      @RequestParam(required = false) String sort ){
         return delegate.booksGetAll(page, size, sort);
     }*/
-    @GetMapping(value = "/books")
-    public Flux<ResponseEntity<BookDTO>> getAllBooks() {
-        return delegate.booksGetAll();
-    }
 
-    @GetMapping(value = "/books/{status}")
-    public Flux<ResponseEntity<BookDTO>> getAllBooksByStatus(@PathVariable String status) {
+    @GetMapping(value = "/books")
+    public Flux<ResponseEntity<BookDTO>> getAllBooksByStatus(@RequestParam String status) {
         return delegate.booksStatusGet(BookStatus.valueOf(status));
     }
 

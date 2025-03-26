@@ -28,9 +28,6 @@ public class BookEntity implements Serializable,Cloneable {
     @Column(name="description", nullable = false)
     private String description;
 
-    @Column(name = "is_published")
-    private Boolean isPublished = false;
-
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private BookStatus status;

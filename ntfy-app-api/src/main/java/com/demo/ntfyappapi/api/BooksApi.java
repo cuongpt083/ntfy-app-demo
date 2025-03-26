@@ -61,7 +61,7 @@ public interface BooksApi {
     )
     
     default Flux<ResponseEntity<BookDTO>> booksStatusGet(
-        @Parameter(name = "status", description = "Filter books by status", in = ParameterIn.QUERY) @Valid @RequestParam(value = "status", required = false) BookStatus status
+        @Parameter(name = "status", description = "Filter books by status", in = ParameterIn.QUERY, required = false) @Valid @RequestParam(value = "status", required = false) BookStatus status
     ) {
         return getDelegate().booksStatusGet(status);
     }
