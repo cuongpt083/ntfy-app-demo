@@ -56,10 +56,15 @@ public class BookServiceImpl implements BookService {
                 .map(bookMapper::entityToDto);
     }
 
+    /**
+     * @return
+     */
+    @Override
     public Flux<BookDTO> getAllBooks() {
         return Flux.fromIterable(bookRepository.findAll())
                 .map(bookMapper::entityToDto);
     }
+
 
     /*@Override
     public Flux<BookDTO> getAllBooks(int page, int size, String sort) {
@@ -80,7 +85,10 @@ public class BookServiceImpl implements BookService {
      */
     @Override
     public Flux<BookDTO> getAllBooksByStatus(BookStatus status) {
-        return Flux.fromIterable(bookRepository.findAllByStatus(status))
+        if(status == null) {
+            return Flux.fromIterable(bookRepository.findAll().stream().toList()).map(bookMapper::entityToDto);
+        }
+        return Flux.fromIterable(bookRepository.findAllByStatus(status).stream().toList())
                 .map(bookMapper::entityToDto);
     }
 

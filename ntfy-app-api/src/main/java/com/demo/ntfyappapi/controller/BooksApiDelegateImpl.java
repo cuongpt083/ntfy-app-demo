@@ -84,18 +84,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
                     return Flux.empty() ;
                 });
     }*/
-    @Override
-    public Flux<ResponseEntity<BookDTO>> booksGetAll() {
-        Flux<BookDTO> allBooks = bookService.getAllBooks();
 
-        return allBooks
-                .map((ResponseEntity::ok))
-                .onErrorResume(err -> {
-                    err.printStackTrace();
-                    // log.error("Error message", err);
-                    return Flux.empty() ;
-                });
-    }
 
     /**
      * Fetch books match status
@@ -105,13 +94,19 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
         return ResponseEntity.ok(bookDTOList);
     }*/
     @Override
-    public Flux<ResponseEntity<BookDTO>> booksStatusGet(@Valid BookStatus status){
-        System.out.println("This");
+    public Flux<ResponseEntity<BookDTO>> booksStatusGet(BookStatus status){
+        if(status == null)
+            return bookService.getAllBooks()
+                            .map(ResponseEntity::ok)
+                                    .onErrorResume(err -> {
+                                       // log.error("") ;
+                                        return Flux.just(ResponseEntity.status(HttpStatus.NO_CONTENT).body(null));
+                                    });
         return bookService.getAllBooksByStatus(status)
                 .map(ResponseEntity::ok)
                 .onErrorResume(err -> {
                     // log.error("Error message", err);
-                    return Flux.empty() ;
+                    return Flux.just(ResponseEntity.status(HttpStatus.NO_CONTENT).body(null));
                 });
     }
 

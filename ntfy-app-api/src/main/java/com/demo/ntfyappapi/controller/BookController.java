@@ -44,7 +44,7 @@ public class BookController implements BooksApi {
     }*/
 
     @GetMapping(value = "/books")
-    public Flux<ResponseEntity<BookDTO>> getAllBooksByStatus(@RequestParam String status) {
+    public Flux<ResponseEntity<BookDTO>> getAllBooksByStatus(@RequestParam(required = false) String status) {
         return delegate.booksStatusGet(BookStatus.valueOf(status));
     }
 
