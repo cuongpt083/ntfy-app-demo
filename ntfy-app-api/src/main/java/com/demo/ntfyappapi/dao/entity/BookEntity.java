@@ -1,51 +1,51 @@
 package com.demo.ntfyappapi.dao.entity;
 
 import com.demo.ntfyappapi.dto.BookStatus;
-import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.DiscriminatorFormula;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 
-@Entity
+
 @Data
 @Table(name = "book", schema = "ntfy_app")
-@DiscriminatorFormula("'Book'")
 public class BookEntity implements Serializable,Cloneable {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "title", nullable = false)
+    @Column("title")
     private String title;
 
-    @Column(name = "isbn", nullable = false, unique = true)
+    @Column("isbn")
     private String isbn;
 
-    @Column(name="description", nullable = false)
+    @Column("description")
     private String description;
 
-    @Column(name = "status", nullable = false)
-    @Enumerated(EnumType.STRING)
+    @Column("status")
     private BookStatus status;
 
-    @Column(name = "status_desc", nullable = false)
+    @Column("status_desc")
     private String statusDescription;
 
-    @Column(name = "created_at",nullable = false)
+    @Column("created_at")
+    @CreatedDate
     private ZonedDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column("updated_at")
+    @LastModifiedDate
     private ZonedDateTime updatedAt;
 
     public BookEntity(){
         this.createdAt = ZonedDateTime.now();
     }
 
-    @PrePersist
+    /*@PrePersist
     protected void onCreate(){
         this.createdAt = ZonedDateTime.now();
     }
@@ -53,7 +53,7 @@ public class BookEntity implements Serializable,Cloneable {
     @PreUpdate
     protected void onUpdate(){
         this.updatedAt = ZonedDateTime.now();
-    }
+    }*/
 
     @Override
     public BookEntity clone() {
@@ -63,4 +63,5 @@ public class BookEntity implements Serializable,Cloneable {
             throw new AssertionError();
         }
     }
+
 }

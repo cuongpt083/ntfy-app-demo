@@ -3,19 +3,19 @@ package com.demo.ntfyappapi.dao.repository;
 import com.demo.ntfyappapi.dao.entity.BookEntity;
 import com.demo.ntfyappapi.dto.BookStatus;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
-import reactor.util.annotation.NonNullApi;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.util.annotation.NonNull;
 
-import java.util.List;
+import java.awt.print.Book;
 
 @Repository
-public interface BookRepository extends JpaRepository<BookEntity, Long> {
-    List<BookEntity> findAllByStatus(BookStatus status);
-    List<BookEntity> findByTitleContaining(String title, Pageable pageable);
+public interface BookRepository extends ReactiveCrudRepository<BookEntity, Long> {
+    Flux<BookEntity> findAllByStatus(Pageable pageable, BookStatus status);
+    Flux<BookEntity> findAll(Pageable pageable);
+    Flux<BookEntity> findAllByIsbn(String isbn);
 
-    List<BookEntity> findAllByIsbn(String isbn);
-
-    void deleteById( Long id) ;
+    Mono<Void> deleteById(@NonNull Long id) ;
 }

@@ -54,16 +54,11 @@ database:
     query-param-name: schema
 
 # Logging configuration
-logging:
-  level:
-    root: INFO
-    org.springframework.data: INFO
-    org.hibernate: INFO
-    org.hibernate.SQL: INFO
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    com.demo.ntfyappapi.service: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+logbook:
+  write:
+    max-body-size: 1024
+  format:
+    style: json
 
 # Actuator endpoints
 management:
