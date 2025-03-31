@@ -3,12 +3,11 @@ spring:
     name: ntfy-app-api
   # JPA and Hibernate configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/demo_api
+    url: jdbc:postgresql://172.21.131.198:5432/demo_api
     username: demo
     password: Demo2025
     driver-class-name: org.postgresql.Driver
     hikari:
-
       maximum-pool-size: 10
       minimum-idle: 5
       idle-timeout: 30000
@@ -22,7 +21,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        #dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         default_schema: ntfy_app
         jdbc:
@@ -85,6 +84,7 @@ app:
     allowed-statuses: APPROVED,REJECTED,PENDING_REVIEW
     auto-approve-threshold: 3
     notification:
+      baseUrl: https://notification.fintechviet.vn
       enabled: true
       email-template: approval-notification.html
 
@@ -98,6 +98,9 @@ app:
   cache:
     enabled: true
     ttl-seconds: 300
+  notification:
+    maker-topic: "maker-msg"
+    checker-topic: "checker-msg"
 
   # For multi-tenancy and schema switching
   tenant:

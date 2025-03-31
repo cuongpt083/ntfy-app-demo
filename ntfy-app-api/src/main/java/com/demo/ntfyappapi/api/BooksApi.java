@@ -29,6 +29,8 @@ import jakarta.annotation.Generated;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 @Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2025-03-21T17:06:44.498786400+07:00[Asia/Bangkok]", comments = "Generator version: 7.7.0")
 @Validated
 @Tag(name = "Books", description = "Book management operations")
@@ -123,7 +125,7 @@ public interface BooksApi {
         value = "/books/{id}"
     )
     
-    default Mono<ResponseEntity<Void>> booksIdDelete(
+    default Mono<ResponseEntity<Map<String,String>>> booksIdDelete(
         @Parameter(name = "id", description = "", required = true, in = ParameterIn.PATH) @PathVariable("id") String id
     ) {
         return getDelegate().booksIdDelete(id);

@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.NativeWebRequest;
 
+import java.util.Map;
 import java.util.Optional;
 import jakarta.annotation.Generated;
 import reactor.core.publisher.Flux;
@@ -90,14 +91,18 @@ public interface BooksApiDelegate {
     /**
      * DELETE /books/{id} : Delete a book
      *
-     * @param id  (required)
+     * @param id (required)
      * @return Book deleted successfully (status code 204)
-     *         or Book not found (status code 404)
+     * or Book not found (status code 404)
      * @see BooksApi#booksIdDelete
      */
-    default Mono<ResponseEntity<Void>> booksIdDelete(String id) {
+    /*default Mono<Void> booksIdDelete(String id) {
         return Mono.just(ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null));
 
+    }*/
+
+    default Mono<ResponseEntity<Map<String, String>>> booksIdDelete(String id) {
+        return Mono.just(ResponseEntity.ok(Map.of("message", "Book is deleted")));
     }
 
     /**

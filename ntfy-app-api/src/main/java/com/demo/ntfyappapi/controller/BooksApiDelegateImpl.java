@@ -1,39 +1,26 @@
 package com.demo.ntfyappapi.controller;
 
-import com.demo.ntfyappapi.dao.entity.BookEntity;
-import com.demo.ntfyappapi.dao.repository.BookRepository;
 import com.demo.ntfyappapi.dto.BookDTO;
 import com.demo.ntfyappapi.dto.BookStatus;
 import com.demo.ntfyappapi.dto.request.BooksIdApprovePatchRequest;
 import com.demo.ntfyappapi.dto.request.BooksIdRejectPatchRequest;
 import com.demo.ntfyappapi.dto.request.BooksIdRequestApprovalPatchRequest;
-import com.demo.ntfyappapi.mapper.BookMapper;
+import com.demo.ntfyappapi.exception.BookNotFoundException;
+import com.demo.ntfyappapi.exception.GeneralException;
 import com.demo.ntfyappapi.service.BookService;
-import jakarta.validation.Valid;
-import jakarta.validation.Validator;
-import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @Component
 public class BooksApiDelegateImpl implements BooksApiDelegate {
     @Autowired
     private BookService bookService;
-
-    @Autowired
-    private BookMapper bookMapper;
-    @Autowired
-    private BookRepository bookRepository;
 
     /*@Autowired
     private Validator validator;*/
@@ -45,7 +32,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
             return bookService.createBook(bookDTO)
                     .map(savedBook -> ResponseEntity.status(HttpStatus.CREATED).body(savedBook));
         }
-        // Check if book with the same ID already exists
+        /* Check if book with the same ID already exists */
         return bookService.getBookById(bookDTO.getId())
                 .flatMap(existingBook ->
                         // If exists, return Error
@@ -144,6 +131,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
                 .map(ResponseEntity::ok)
                 .onErrorResume(err -> {
                     // log.error("Error message", err);
+                    err.printStackTrace();
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null));
                 });
         //return ResponseEntity.ok(requestedApprovalBook);
@@ -186,13 +174,28 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> booksIdDelete(String id) {
+    public Mono<ResponseEntity<Map<String,String>>> booksIdDelete(String id) {
         //bookService.deleteBook(id).;
         return bookService.deleteBook(id)
-                .map(ResponseEntity::ok)
+                .then(
+                        Mono.just(ResponseEntity.ok(Map.of("Congratulation", "Book with id " + id + " deleted successfully")))
+                )
                 .onErrorResume(err -> {
                     // log.error("Error message", err);
-                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null));
+                    if(err instanceof BookNotFoundException) {
+                        return Mono.just(ResponseEntity.status(
+                                HttpStatus.NOT_FOUND)
+                                .body(Map.of("Sorry", "Book with id " + id + " not found.")));
+                    } else if( err instanceof GeneralException) {
+                        return Mono.just(ResponseEntity.status(
+                                HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(Map.of("Sorry", "Book with id " + id + " cannot be deleted.")));
+                    } else {
+                        return Mono.just(ResponseEntity.status(
+                                        HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(Map.of("Sorry", "Book with id " + id + " cannot be deleted. Unexpected error.")));
+                    }
+
                 });
 
     }
