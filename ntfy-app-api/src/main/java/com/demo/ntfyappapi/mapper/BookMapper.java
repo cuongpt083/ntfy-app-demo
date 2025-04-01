@@ -3,10 +3,13 @@ package com.demo.ntfyappapi.mapper;
 import com.demo.ntfyappapi.dao.entity.BookEntity;
 import com.demo.ntfyappapi.dto.BookDTO;
 import com.demo.ntfyappapi.dto.request.BookPostRequest;
+import com.demo.ntfyappapi.exception.GeneralException;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValueMappingStrategy;
 import org.mapstruct.factory.Mappers;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Mapper(componentModel = "spring", nullValueIterableMappingStrategy = NullValueMappingStrategy.RETURN_NULL)
 public interface BookMapper {
@@ -33,4 +36,6 @@ public interface BookMapper {
         bookDTO.setStatusDescription(bookReq.getStatusDescription());
         return bookDTO;
     }
+
+
 }

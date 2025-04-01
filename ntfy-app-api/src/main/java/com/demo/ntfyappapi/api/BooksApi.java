@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -62,10 +63,12 @@ public interface BooksApi {
         produces = { "application/json" }
     )
     
-    default Flux<ResponseEntity<BookDTO>> booksStatusGet(
-        @Parameter(name = "status", description = "Filter books by status", in = ParameterIn.QUERY, required = false) @Valid @RequestParam(value = "status", required = false) BookStatus status
+    default Mono<ResponseEntity<Page<BookDTO>>> booksStatusGet(
+            @Parameter(name = "page", description = "Page to retrieve", in = ParameterIn.QUERY, required = true) @Valid @RequestParam(value = "page") int page,
+            @Parameter(name = "size", description = "Size of page", in = ParameterIn.QUERY, required = true) @Valid @RequestParam(value = "size") int size,
+            @Parameter(name = "status", description = "Filter books by status", in = ParameterIn.QUERY, required = false) @Valid @RequestParam(value = "status", required = false) BookStatus status
     ) {
-        return getDelegate().booksStatusGet(status);
+        return getDelegate().booksStatusGet(page, size, status);
     }
 
 

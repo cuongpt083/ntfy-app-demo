@@ -3,7 +3,7 @@ package com.demo.ntfyappapi;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.demo.ntfyappapi"})
 public class NtfyAppApiApplication {
 
     public static void main(String[] args) {

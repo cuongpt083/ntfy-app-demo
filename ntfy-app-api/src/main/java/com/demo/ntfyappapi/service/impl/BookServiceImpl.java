@@ -15,16 +15,24 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.boot.actuate.startup.StartupEndpoint;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class BookServiceImpl implements BookService {
+
     private final BookRepository bookRepository;
     private final BookMapper bookMapper;
     private static final Logger log = LogManager.getLogger(BookServiceImpl.class);
@@ -41,12 +49,22 @@ public class BookServiceImpl implements BookService {
     @Autowired
     private NotificationService notificationService;
 
+    //private StartupEndpoint startupEndpoint;
+
 
     /**
      * @param bookDTO
      * @return
      */
     @Override
+    @Transactional(
+            propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            rollbackFor = {
+                    GeneralException.class,
+                    DataIntegrityViolationException.class
+            }
+    )
     public Mono<BookDTO> createBook(BookDTO bookDTO) {
         BookEntity bookEntity = bookMapper.dtoToEntity(bookDTO);
         bookEntity.setStatus(BookStatus.DRAFT);
@@ -54,9 +72,7 @@ public class BookServiceImpl implements BookService {
 
         return bookRepository.save(bookEntity).
                 map(bookMapper::entityToDto)
-                .onErrorResume(err -> {
-                    return Mono.error(new GeneralException("Cannot create a new book"));
-                })
+                .onErrorResume(err -> Mono.error(new GeneralException("Cannot create a new book")))
                 ;
 
     }
@@ -82,10 +98,16 @@ public class BookServiceImpl implements BookService {
     /**
      * @return
      */
-    @Override
-    public Flux<BookDTO> getAllBooks() {
-        return bookRepository.findAll()
-                .map(bookMapper::entityToDto);
+    public Mono<Page<BookDTO>> getAllBooks(Pageable pageable) {
+        return bookRepository.findAllBy(pageable)
+                .map(bookMapper::entityToDto)
+                .collectList()
+                .zipWith(bookRepository.count())
+                .map(tuple -> {
+                    List<BookDTO> bookDTOS = tuple.getT1();
+                    long total = tuple.getT2();
+                    return new PageImpl<>(bookDTOS, pageable, total);
+                });
     }
 
 
@@ -107,16 +129,33 @@ public class BookServiceImpl implements BookService {
      * @return
      */
     @Override
-    public Flux<BookDTO> getAllBooksByStatus(int page, int size, BookStatus status) {
+    public Mono<Page<BookDTO>> getAllBooksByStatus(Pageable pageable, BookStatus status) {
+        Mono<Long> totalCount = bookRepository.count();
         if(status == null) {
-            return bookRepository.findAll(PageRequest.of(page, size))
-                    .map(bookMapper::entityToDto);
+            return getAllBooks(pageable);
+        }else{
+            return bookRepository.findAllByStatus(pageable, status)
+                    .map(bookMapper::entityToDto)
+                    .collectList()
+                    .zipWith(bookRepository.countAllByStatusIs(status))
+                    .map(tuple -> {
+                        List<BookDTO> bookDTOS = tuple.getT1();
+                        long total = tuple.getT2();
+
+                        return new PageImpl<>(bookDTOS,pageable,total);
+                    });
         }
-        return bookRepository.findAllByStatus(PageRequest.of(page,size), status)
-                .map(bookMapper::entityToDto);
     }
 
     @Override
+    @Transactional(
+            propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            rollbackFor = {
+                    GeneralException.class,
+                    IllegalStateException.class,
+                    DataIntegrityViolationException.class
+            })
     public Mono<BookDTO> updateBook(String id, BookDTO bookDTO) {
         return bookRepository.findById(Long.valueOf(id))
                 .flatMap(existingBook -> {
@@ -135,11 +174,16 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    @Transactional(
+            propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            rollbackFor = {
+                    GeneralException.class,
+                    DataIntegrityViolationException.class
+            })
     public Mono<Void> deleteBook(String id) {
         return bookRepository.deleteById(Long.valueOf(id))
-                .onErrorResume(BookNotFoundException.class, e -> Mono.error(
-                        new BookNotFoundException("Cannot find a book with id " + id)))
-                .onErrorResume(GeneralException.class, e -> Mono.error(new GeneralException("Undefined error.")));
+                .onErrorMap(this::mapToException);
     }
 
     /**
@@ -148,6 +192,15 @@ public class BookServiceImpl implements BookService {
      * @return
      */
     @Override
+    @Transactional(
+            propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            rollbackFor = {
+                    GeneralException.class,
+                    DataIntegrityViolationException.class,
+                    IllegalStateException.class
+            }
+    )
     public Mono<BookDTO> requestApproval(String id, BookDTO bookDTO) {
         return bookRepository.findById(Long.valueOf(id))
                 .switchIfEmpty(Mono.error(new BookNotFoundException("Book not found with id " + id)))
@@ -168,7 +221,8 @@ public class BookServiceImpl implements BookService {
 
                     notificationService.sendToChecker(request).subscribe();
                 })
-                .map(bookMapper::entityToDto);
+                .map(bookMapper::entityToDto)
+                .onErrorMap(this::mapToException);
     }
 
     /**
@@ -177,6 +231,15 @@ public class BookServiceImpl implements BookService {
      * @return
      */
     @Override
+    @Transactional(
+            propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            rollbackFor = {
+                    GeneralException.class,
+                    DataIntegrityViolationException.class,
+                    IllegalStateException.class
+            }
+    )
     public Mono<BookDTO> approveBook(String id, BookDTO bookDTO) {
         return bookRepository.findById(Long.valueOf(id))
                 .switchIfEmpty(Mono.error(new BookNotFoundException("Book not found with id: " + id)))
@@ -193,13 +256,14 @@ public class BookServiceImpl implements BookService {
                 })
                 .doOnSuccess(savedBook -> {
                     NotificationRequest request = new NotificationRequest();
-                    request.setTopic(CHECKER_TOPIC);
-                    request.setMessage("Phê duyệt giúp tôi nhé: book id: " + savedBook.getId());
-                    request.setRcvrRoles(new String[] {"ho-checkers,br-checkers"});
+                    request.setTopic(MAKER_TOPIC);
+                    request.setMessage("Đã phê duyệt nhé: book id: " + savedBook.getId());
+                    request.setRcvrRoles(new String[] {"ho-maker,br-maker"});
 
                     notificationService.sendToChecker(request).subscribe();
                 })
-                .map(bookMapper::entityToDto);
+                .map(bookMapper::entityToDto)
+                .onErrorMap(this::mapToException);
     }
 
     /// @param id
@@ -207,73 +271,163 @@ public class BookServiceImpl implements BookService {
     /// @return
     /// Todo: implement this method
     @Override
+    @Transactional(
+            propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            rollbackFor = {
+                    GeneralException.class,
+                    DataIntegrityViolationException.class,
+                    IllegalStateException.class
+            }
+    )
     public Mono<BookDTO> rejectBook(String id, BookDTO bookDTO) {
-        return null;
+        return bookRepository.findById(Long.valueOf(id))
+                .switchIfEmpty(Mono.error(new BookNotFoundException("Book not found with id: " + id)))
+                .flatMap(bookEntity -> {
+                    if(!BookStatus.PENDING_APPROVAL.equals(bookDTO.getStatus()))
+                        return Mono.error(new IllegalStateException("Cannot reject request approval for book id " + id
+                        + " due to illegal state."));
+                    bookEntity.setStatus(BookStatus.REJECTED);
+                    bookEntity.setUpdatedAt(ZonedDateTime.now());
+                    bookEntity.setStatusDescription("Tôi từ chối nhé, kiểm tra lại thông tin book id " + id);
+                    return bookRepository.save(bookEntity);
+                })
+                .doOnSuccess(savedBook -> {
+                    NotificationRequest request = new NotificationRequest();
+                    request.setTopic(MAKER_TOPIC);
+                    request.setMessage("Yêu cầu bị từ chối, book id: " + savedBook.getId());
+                    request.setRcvrRoles(new String[] {"ho-makers,br-makers"});
+                    notificationService.sendToChecker(request).subscribe();
+                })
+                .map(bookMapper::entityToDto)
+                .onErrorMap(this::mapToException);
     }
 
     /// Todo: implement this method
     @Override
+    @Transactional(
+            propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            rollbackFor = {
+                    GeneralException.class,
+                    DataIntegrityViolationException.class,
+                    IllegalStateException.class
+            }
+    )
     public Mono<BookDTO> requestApproval(String id, String statusDescription) {
-        return Mono.fromCallable(() -> {
-            BookEntity book = bookRepository.findById(Long.valueOf(id))
-                    .orElseThrow(() -> new BookNotFoundException("Book not found with id: " + id));
+        return bookRepository.findById(Long.valueOf(id))
+                .switchIfEmpty(Mono.error(new BookNotFoundException("Book not found with id " + id)))
+                .flatMap(book -> {
+                    if(BookStatus.DRAFT.equals(book.getStatus())){
+                        book.setStatus(BookStatus.PENDING_APPROVAL);
+                        book.setUpdatedAt(ZonedDateTime.now());
+                        return bookRepository.save(book);
+                    }else {
+                        return Mono.error(new IllegalStateException("The book cannot send to approve due to illegal state."));
+                    }
+                })
+                .doOnSuccess(savedBook -> {
+                    NotificationRequest request = new NotificationRequest();
+                    request.setTopic(CHECKER_TOPIC);
+                    request.setMessage("Phê duyệt giúp tôi nhé: book id: " + savedBook.getId());
+                    request.setRcvrRoles(new String[] {"ho-checkers,br-checkers"});
 
-            book.setStatus(BookStatus.PENDING_APPROVAL);
-            book.setStatusDescription(statusDescription);
-            book.setUpdatedAt(ZonedDateTime.now());
-            return bookRepository.save(book);
-        }).doOnSuccess(savedEntity -> {
-            // After processing business logic, send notification
-            NotificationRequest request = new NotificationRequest();
-            request.setTopic(CHECKER_TOPIC);
-            request.setMessage("Phê duyệt giúp tôi nhé: book id: " + savedEntity.getId());
-            request.setRcvrRoles(new String[] {"ho-checkers,br-checkers"});
-
-            notificationService.sendToChecker(request).subscribe();
-        }).map(bookMapper::entityToDto);
-
+                    notificationService.sendToChecker(request).subscribe();
+                })
+                .map(bookMapper::entityToDto)
+                .onErrorMap(this::mapToException);
     }
 
     @Override
+    @Transactional(
+            propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            rollbackFor = {
+                    GeneralException.class,
+                    DataIntegrityViolationException.class,
+                    IllegalStateException.class
+            }
+    )
     public Mono<BookDTO> approveBook(String id, String statusDescription) {
-        return Mono.fromCallable(() -> {
-            BookEntity book = bookRepository.findById(Long.valueOf(id))
-                    .orElseThrow(() -> new BookNotFoundException("Book not found with id: " + id));
-
-            book.setStatus(BookStatus.APPROVED);
-            book.setStatusDescription(book.getDescription() + " -> " + statusDescription);
-            book.setUpdatedAt(ZonedDateTime.now());
-            BookEntity approvedBook = bookRepository.save(book);
-
-            NotificationRequest sendToMaker = new NotificationRequest();
-            sendToMaker.setTopic(CHECKER_TOPIC);
-            sendToMaker.setMessage("Đã phê duyệt nhé: book id: " + approvedBook.getId());
-            sendToMaker.setRcvrRoles(new String[] {"all"});
-
-            return approvedBook;
-        }).map(bookMapper::entityToDto)
-                .flatMap(bookDTO -> {
-                    // After processing business logic, send notification
+        return bookRepository.findById(Long.valueOf(id))
+                .switchIfEmpty(Mono.error(new BookNotFoundException("Book not found with id: " + id)))
+                .flatMap(book -> {
+                    if(BookStatus.PENDING_APPROVAL.equals(book.getStatus())){
+                        book.setStatus(BookStatus.APPROVED);
+                        book.setStatusDescription(String.valueOf(book.getStatusDescription()));
+                        book.setUpdatedAt(ZonedDateTime.now());
+                        return bookRepository.save(book);
+                    }else {
+                        return Mono.error(new IllegalStateException("Cannot approve the book with id " + id
+                                + " due to illegal state"));
+                    }
+                })
+                .doOnSuccess(savedBook -> {
                     NotificationRequest request = new NotificationRequest();
                     request.setTopic(MAKER_TOPIC);
-                    request.setMessage("Đã Phê duyệt nhé: book id: " + bookDTO.getId());
+                    request.setMessage("Đã phê duyệt nhé: book id: " + savedBook.getId());
                     request.setRcvrRoles(new String[] {"ho-makers,br-makers"});
-                    return notificationService.sendToChecker(request).thenReturn(bookDTO);
-                });
+
+                    notificationService.sendToChecker(request).subscribe();
+                })
+                .map(bookMapper::entityToDto)
+                .onErrorMap(this::mapToException);
+
     }
+
+
 
     @Override
+    @Transactional(
+            propagation = Propagation.REQUIRED,
+            isolation = Isolation.READ_COMMITTED,
+            rollbackFor = {
+                    GeneralException.class,
+                    DataIntegrityViolationException.class,
+                    IllegalStateException.class
+            }
+    )
     public Mono<BookDTO> rejectBook(String id, String statusDescription) {
-        return Mono.fromCallable(() -> {
-            BookEntity book = bookRepository.findById(Long.valueOf(id))
-                    .orElseThrow(() -> new BookNotFoundException("Book not found with id: " + id));
-
-            book.setStatus(BookStatus.REJECTED);
-            book.setStatusDescription(book.getStatusDescription() + " -> " +statusDescription);
-            book.setUpdatedAt(ZonedDateTime.now());
-
-            return bookRepository.save(book);
-        }).map(bookMapper::entityToDto);
+        return bookRepository.findById(Long.valueOf(id))
+                .switchIfEmpty(Mono.error(new BookNotFoundException("Book not found with id: " + id)))
+                .flatMap(bookEntity -> {
+                    if(!BookStatus.PENDING_APPROVAL.equals(bookEntity.getStatus()))
+                        return Mono.error(new IllegalStateException("Cannot reject request approval for book id " + id
+                                + " due to illegal state."));
+                    bookEntity.setStatus(BookStatus.REJECTED);
+                    bookEntity.setUpdatedAt(ZonedDateTime.now());
+                    bookEntity.setStatusDescription("Tôi từ chối nhé, kiểm tra lại thông tin book id " + id);
+                    return bookRepository.save(bookEntity);
+                })
+                .doOnSuccess(savedBook -> {
+                    NotificationRequest request = new NotificationRequest();
+                    request.setTopic(MAKER_TOPIC);
+                    request.setMessage("Yêu cầu bị từ chối, book id: " + savedBook.getId());
+                    request.setRcvrRoles(new String[] {"ho-makers,br-makers"});
+                    notificationService.sendToChecker(request).subscribe();
+                })
+                .map(bookMapper::entityToDto)
+                .onErrorMap(this::mapToException);
     }
 
+
+    /**
+     * Map different types of exceptions to more specific service exceptions
+     *
+     * @param originalException The original exception thrown
+     * @return A mapped exception for better error handling
+     */
+    private Throwable mapToException(Throwable originalException){
+        // Map database-related exceptions
+        if (originalException instanceof DataIntegrityViolationException) {
+            return new GeneralException("Unable to reject book due to data integrity issues", originalException);
+        }
+
+        // Map repository-related exceptions
+        if (originalException instanceof DataAccessException) {
+            return new GeneralException("Database error occurred during book rejection", originalException);
+        }
+
+        return new GeneralException("Unexpected error during book rejection", originalException);
+    }
 }

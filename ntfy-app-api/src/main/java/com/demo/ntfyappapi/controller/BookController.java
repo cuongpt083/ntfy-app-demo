@@ -7,6 +7,9 @@ import com.demo.ntfyappapi.dto.request.BooksIdApprovePatchRequest;
 import com.demo.ntfyappapi.dto.request.BooksIdRejectPatchRequest;
 import com.demo.ntfyappapi.dto.request.BooksIdRequestApprovalPatchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -44,8 +47,9 @@ public class BookController implements BooksApi {
     }*/
 
     @GetMapping(value = "/books")
-    public Flux<ResponseEntity<BookDTO>> getAllBooksByStatus(@RequestParam(required = false) String status) {
-        return delegate.booksStatusGet(BookStatus.valueOf(status));
+    public Mono<ResponseEntity<Page<BookDTO>>> getAllBooksByStatus(@RequestParam int page, @RequestParam int size , @RequestParam(required = false) String status) {
+        //Pageable pageable = PageRequest.of(page,size);
+        return delegate.booksStatusGet(page, size, BookStatus.valueOf(status));
     }
 
     @PutMapping(value = "/books/{id}")

@@ -1,5 +1,6 @@
 package com.demo.ntfyappapi.controller;
 
+import com.demo.ntfyappapi.dao.repository.BookRepository;
 import com.demo.ntfyappapi.dto.BookDTO;
 import com.demo.ntfyappapi.dto.BookStatus;
 import com.demo.ntfyappapi.dto.request.BooksIdApprovePatchRequest;
@@ -8,19 +9,28 @@ import com.demo.ntfyappapi.dto.request.BooksIdRequestApprovalPatchRequest;
 import com.demo.ntfyappapi.exception.BookNotFoundException;
 import com.demo.ntfyappapi.exception.GeneralException;
 import com.demo.ntfyappapi.service.BookService;
+import lombok.RequiredArgsConstructor;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class BooksApiDelegateImpl implements BooksApiDelegate {
+    private final BookRepository bookRepository;
+
     @Autowired
     private BookService bookService;
+
+    private Logger log;
 
     /*@Autowired
     private Validator validator;*/
@@ -30,7 +40,11 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
         // Skip ID check if ID is null (new book with auto-generated ID)
         if(bookDTO.getId() == null) {
             return bookService.createBook(bookDTO)
-                    .map(savedBook -> ResponseEntity.status(HttpStatus.CREATED).body(savedBook));
+                    .map(savedBook -> ResponseEntity.status(HttpStatus.CREATED).body(savedBook))
+                    .onErrorResume(err -> {
+                        log.error(err.getCause());
+                        return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null));
+                    });
         }
         /* Check if book with the same ID already exists */
         return bookService.getBookById(bookDTO.getId())
@@ -44,33 +58,13 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
                         .map(savedBook -> ResponseEntity.status(HttpStatus.CREATED).body(savedBook))
                 )
                 .onErrorResume(err -> {
-                    //log.error("Error creating book",err);
+                    log.error("Error creating book",err);
                     //err.printStackTrace();
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null));
                 });
     }
 
-    /**
-     * Fetch all books
-     * */
-    /*public Flux<ResponseEntity<BookDTO>> booksGetAll(int page, int size, String sort){
-        PageRequest pageRequest = PageRequest.of(
-                page,
-                size,
-                sort != null ? createSort(sort) : Sort.by(Sort.Direction.ASC, "title")
-        );
 
-        Page<BookEntity> bookEntityPage = bookRepository.findAll(pageRequest);
-        List<BookDTO> bookDTOList = bookEntityPage.getContent().stream()
-                .map(Mapper)
-                .collect(Collectors.toList());
-        return bookService.getAllBooks()
-                .map(ResponseEntity::ok)
-                .onErrorResume(err -> {
-                    // log.error("Error message", err);
-                    return Flux.empty() ;
-                });
-    }*/
 
 
     /**
@@ -81,20 +75,31 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
         return ResponseEntity.ok(bookDTOList);
     }*/
     @Override
-    public Flux<ResponseEntity<BookDTO>> booksStatusGet(BookStatus status){
-        if(status == null)
-            return bookService.getAllBooks()
-                            .map(ResponseEntity::ok)
-                                    .onErrorResume(err -> {
-                                       // log.error("") ;
-                                        return Flux.just(ResponseEntity.status(HttpStatus.NO_CONTENT).body(null));
-                                    });
-        return bookService.getAllBooksByStatus(status)
-                .map(ResponseEntity::ok)
-                .onErrorResume(err -> {
-                    // log.error("Error message", err);
-                    return Flux.just(ResponseEntity.status(HttpStatus.NO_CONTENT).body(null));
-                });
+    public Mono<ResponseEntity<Page<BookDTO>>> booksStatusGet(int page, int size, BookStatus status){
+        Pageable pageable = PageRequest.of(page,size);
+        Mono<Long> count = bookRepository.count();
+        if(status == null) {
+            return bookService.getAllBooks(pageable)
+                    .map(bookPage -> {
+                        // If page is empty and not first page, return 404
+                        if(bookPage.isEmpty() && bookPage.getNumber() > 0){
+                            return ResponseEntity.notFound().build();
+                        }
+                        // Return successful response with page of BookDTOs
+                        return ResponseEntity.ok(bookPage);
+                    });
+        }else {
+            return bookService.getAllBooksByStatus(pageable,status)
+                    .map(bookPage -> {
+                        // If page is empty and not first page, return 404
+                        if(bookPage.isEmpty() && bookPage.getNumber() > 0){
+                            return ResponseEntity.notFound().build();
+                        }
+                        // Return successful response with page of BookDTOs
+                        return ResponseEntity.ok(bookPage);
+                    });
+        }
+
     }
 
 
@@ -116,7 +121,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
         return bookService.approveBook(id,request.getStatusDescription())
                 .map(ResponseEntity::ok)
                 .onErrorResume(err -> {
-                    // log.error("Error message", err);
+                    log.error("Error message ", err.getCause());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null));
                 });
     }
@@ -130,8 +135,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
         return bookService.requestApproval(id, request.getStatusDescription())
                 .map(ResponseEntity::ok)
                 .onErrorResume(err -> {
-                    // log.error("Error message", err);
-                    err.printStackTrace();
+                    log.error("Error message ", err.getCause());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null));
                 });
         //return ResponseEntity.ok(requestedApprovalBook);
@@ -143,7 +147,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
         return bookService.rejectBook(id,request.getStatusDescription())
                 .map(ResponseEntity::ok)
                 .onErrorResume(err -> {
-                    // log.error("Error message", err);
+                    log.error("Error message ", err.getCause());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null));
                 });
         //return ResponseEntity.ok(rejectedBook);
@@ -156,7 +160,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
         return bookService.updateBook(id, book)
                 .map(ResponseEntity::ok)
                 .onErrorResume(err -> {
-                    // log.error("Error message", err);
+                    log.error("Error message ", err.getCause());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null));
                 });
     }
@@ -168,7 +172,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
         return bookService.getBookById(id)
                 .map(ResponseEntity::ok)
                 .onErrorResume(err -> {
-                    // log.error("Error message", err);
+                    log.error("Error message ", err.getCause());
                     return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null));
                 });
     }
@@ -181,19 +185,19 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
                         Mono.just(ResponseEntity.ok(Map.of("Congratulation", "Book with id " + id + " deleted successfully")))
                 )
                 .onErrorResume(err -> {
-                    // log.error("Error message", err);
+                    log.error("Error message", err);
                     if(err instanceof BookNotFoundException) {
                         return Mono.just(ResponseEntity.status(
                                 HttpStatus.NOT_FOUND)
-                                .body(Map.of("Sorry", "Book with id " + id + " not found.")));
+                                .body(Map.of("Sorry", err.getMessage())));
                     } else if( err instanceof GeneralException) {
                         return Mono.just(ResponseEntity.status(
                                 HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body(Map.of("Sorry", "Book with id " + id + " cannot be deleted.")));
+                                .body(Map.of("Sorry", err.getMessage())));
                     } else {
                         return Mono.just(ResponseEntity.status(
                                         HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body(Map.of("Sorry", "Book with id " + id + " cannot be deleted. Unexpected error.")));
+                                .body(Map.of("Sorry", err.getMessage())));
                     }
 
                 });

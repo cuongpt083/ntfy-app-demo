@@ -7,6 +7,8 @@ import com.demo.ntfyappapi.dto.BookStatus;
 import com.demo.ntfyappapi.dto.request.BooksIdApprovePatchRequest;
 import com.demo.ntfyappapi.dto.request.BooksIdRejectPatchRequest;
 import com.demo.ntfyappapi.dto.request.BooksIdRequestApprovalPatchRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +17,6 @@ import org.springframework.web.context.request.NativeWebRequest;
 import java.util.Map;
 import java.util.Optional;
 import jakarta.annotation.Generated;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -33,10 +34,12 @@ public interface BooksApiDelegate {
      * GET /books : Retrieve all books
      *
      * @param status Filter books by status (optional)
+     * @param page page identity
+     * @param size size of page
      * @return Successfully retrieved books (status code 200)
      * @see BooksApi#booksStatusGet
      */
-    default Flux<ResponseEntity<BookDTO>> booksStatusGet(BookStatus status) {
+    default Mono<ResponseEntity<Page<BookDTO>>> booksStatusGet(int page, int size, BookStatus status) {
         getRequest().ifPresent(request -> {
             for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
                 if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
@@ -46,21 +49,7 @@ public interface BooksApiDelegate {
                 }
             }
         });
-        return Flux.just(ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null));
-
-    }
-
-    default Flux<ResponseEntity<BookDTO>> booksGetAll() {
-        getRequest().ifPresent(request -> {
-            for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
-                if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
-                    String exampleString = "[ { \"createdAt\" : \"2000-01-23T04:56:07.000+00:00\", \"statusDescription\" : \"statusDescription\", \"isbn\" : \"isbn\", \"description\" : \"description\", \"id\" : \"id\", \"title\" : \"title\", \"status\" : \"DRAFT\", \"updatedAt\" : \"2000-01-23T04:56:07.000+00:00\" }, { \"createdAt\" : \"2000-01-23T04:56:07.000+00:00\", \"statusDescription\" : \"statusDescription\", \"isbn\" : \"isbn\", \"description\" : \"description\", \"id\" : \"id\", \"title\" : \"title\", \"status\" : \"DRAFT\", \"updatedAt\" : \"2000-01-23T04:56:07.000+00:00\" } ]";
-                    ApiUtil.setExampleResponse(request, "application/json", exampleString);
-                    break;
-                }
-            }
-        });
-        return Flux.just(ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null));
+        return Mono.just(ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(null));
 
     }
 

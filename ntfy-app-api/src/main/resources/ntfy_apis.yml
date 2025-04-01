@@ -92,6 +92,18 @@ paths:
       tags:
         - Books
       parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          required: true
+          description: Page number for retrieve
+        - name: size
+          in: query
+          schema:
+            type: integer
+          required: true
+          description: Size of page
         - name: status
           in: query
           schema:
