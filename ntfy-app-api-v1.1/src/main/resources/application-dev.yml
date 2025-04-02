@@ -1,0 +1,4 @@
+spring:
+  application:
+    name=ntfy-app-api-v1.1
+

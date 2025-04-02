@@ -1,0 +1,85 @@
+spring:
+  application:
+    name: ntfy-app-api
+  r2dbc:
+    url: r2dbc:postgresql://172.21.131.198:5432/demo_api?schema=ntfy_app
+    username: demo
+    password: Demo2025
+    pool:
+      enabled: true
+      initial-size: 5
+      max-size: 10
+      max-idle-time: 5m
+      max-life-time: 1h
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+  webflux:
+    base-path: /api/v1
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/plain
+    min-response-size: 2KB
+
+# Database schema configuration
+database:
+  schema:
+    default: ntfy-app
+    allowed-schemas: public,ntfy-app,tenant2,staging
+    header-name: X-Schema
+    query-param-name: schema
+
+# Logging configuration
+logbook:
+  write:
+    max-body-size: 1024
+  format:
+    style: json
+
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    db:
+      enabled: true
+
+# Custom application properties
+app:
+  approval:
+    allowed-statuses: APPROVED,REJECTED,PENDING_REVIEW
+    auto-approve-threshold: 3
+    notification:
+      baseUrl: https://notification.fintechviet.vn
+      enabled: true
+      email-template: approval-notification.html
+
+  security:
+    cors:
+      allowed-origins: http://localhost:3000
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: Authorization,Content-Type
+      max-age: 3600
+
+  cache:
+    enabled: true
+    ttl-seconds: 300
+  notification:
+    maker-topic: "maker-msg"
+    checker-topic: "checker-msg"
+
+  # For multi-tenancy and schema switching
+  tenant:
+    schema-based: true
+    default-tenant: ntfy-app

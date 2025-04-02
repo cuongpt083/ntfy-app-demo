@@ -1,0 +1,307 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Reference Number Generator API",
+    "description": "API for generating unique reference numbers with high throughput",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "https://staging-api.example.com/v1",
+      "description": "Staging server"
+    }
+  ],
+  "paths": {
+    "/gen-refno": {
+      "get": {
+        "summary": "Generate a unique reference number",
+        "description": "Returns a unique reference number string (fixed 9 characters) that can be used for transaction tracking, document identification, etc.",
+        "operationId": "generateReferenceNumber",
+        "parameters": [
+          {
+            "name": "prefix",
+            "in": "query",
+            "description": "Optional prefix for the reference number",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "TRX"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Optional format specification for the reference number",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["numeric", "alphanumeric", "uuid"],
+              "default": "alphanumeric"
+            }
+          }
+
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceNumberResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "reference-number"
+        ]
+      }
+    },
+    "/gen-refno/batch": {
+      "post": {
+        "summary": "Generate multiple unique reference numbers in a batch",
+        "description": "Returns multiple unique reference numbers (each fixed 9 characters) in a single request",
+        "operationId": "generateReferenceNumberBatch",
+        "requestBody": {
+          "description": "Batch generation parameters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "reference-number"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ReferenceNumberResponse": {
+        "type": "object",
+        "properties": {
+          "refNo": {
+            "type": "string",
+            "description": "The generated unique reference number",
+            "example": "TRX123456",
+            "description": "The generated unique reference number (fixed 9 characters, excluding any prefix)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO8601 timestamp when the reference number was generated",
+            "example": "2023-04-02T14:53:12.321Z"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Optional ISO8601 timestamp indicating when this reference number expires (if applicable)",
+            "example": "2023-05-02T14:53:12.321Z"
+          }
+        },
+        "required": [
+          "refNo",
+          "timestamp"
+        ]
+      },
+      "BatchRequest": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Number of reference numbers to generate",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 10,
+            "example": 5
+          },
+          "prefix": {
+            "type": "string",
+            "description": "Optional prefix for the reference numbers",
+            "example": "TRX"
+          },
+          "format": {
+            "type": "string",
+            "description": "Optional format specification for the reference numbers",
+            "enum": ["numeric", "alphanumeric", "uuid"],
+            "default": "alphanumeric",
+            "example": "alphanumeric"
+          }
+
+        },
+        "required": [
+          "count"
+        ]
+      },
+      "BatchResponse": {
+        "type": "object",
+        "properties": {
+          "referenceNumbers": {
+            "type": "array",
+            "description": "List of generated reference numbers",
+            "items": {
+              "$ref": "#/components/schemas/ReferenceNumberResponse"
+            }
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of reference numbers generated",
+            "example": 5
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO8601 timestamp when the batch was generated",
+            "example": "2023-04-02T14:53:12.321Z"
+          }
+        },
+        "required": [
+          "referenceNumbers",
+          "count",
+          "timestamp"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code",
+            "example": "INVALID_PARAMETER"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Invalid value for parameter 'length': must be between 4 and 32"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO8601 timestamp when the error occurred",
+            "example": "2023-04-02T14:53:12.321Z"
+          },
+          "path": {
+            "type": "string",
+            "description": "The path of the request that caused the error",
+            "example": "/gen-refno"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "timestamp"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    },
+    {
+      "BearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "reference-number",
+      "description": "Reference number generation operations"
+    }
+  ]
+}

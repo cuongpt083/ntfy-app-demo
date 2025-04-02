@@ -5,14 +5,14 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.3</version>
+        <version>3.4.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.demo</groupId>
-    <artifactId>ntfy-app-api</artifactId>
-    <version>0.1.1-SNAPSHOT</version>
-    <name>ntfy-app-api</name>
-    <description>ntfy-app-api with R2DBC</description>
+    <artifactId>gen-ticket-mvn</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>gen-ticket-mvn</name>
+    <description>gen-ticket-mvn</description>
     <url/>
     <licenses>
         <license/>
@@ -28,6 +28,8 @@
     </scm>
     <properties>
         <java.version>17</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <openapi-generator-version>7.7.0</openapi-generator-version>
     </properties>
     <dependencies>
         <dependency>
@@ -37,12 +39,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-log4j2</artifactId>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.zalando/logbook-spring-boot-starter -->
-        <dependency>
-            <groupId>org.zalando</groupId>
-            <artifactId>logbook-spring-boot-starter</artifactId>
-            <version>3.11.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -58,16 +54,42 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-tracing-bridge-brave</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-r2dbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>r2dbc-postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -80,61 +102,15 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.openapitools</groupId>
-            <artifactId>jackson-databind-nullable</artifactId>
-            <version>0.2.6</version>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
-            <version>6.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>2.0.1.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId>
-            <version>1.5.5.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-r2dbc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>r2dbc-postgresql</artifactId>
-            <scope>runtime</scope>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>0.2.6</version>
         </dependency>
     </dependencies>
 
@@ -149,16 +125,6 @@
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
                         </path>
-                        <path>
-                            <groupId>org.mapstruct</groupId>
-                            <artifactId>mapstruct-processor</artifactId>
-                            <version>1.5.5.Final</version>
-                        </path>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok-mapstruct-binding</artifactId>
-                            <version>0.2.0</version>
-                        </path>
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
@@ -170,8 +136,6 @@
                         <exclude>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.36</version>
-                            <scope>provided</scope>
                         </exclude>
                     </excludes>
                 </configuration>
@@ -179,7 +143,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>7.7.0</version>
+                <version>${openapi-generator-version}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -188,7 +152,7 @@
                         <phase>generate-sources</phase>
                         <configuration>
                             <skip>false</skip>
-                            <inputSpec>${project.basedir}/src/main/resources/ntfy_apis.yml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/api-refno.yml</inputSpec>
                             <generatorName>spring</generatorName>
                             <output>${project.basedir}</output>
                             <configOptions>
@@ -196,6 +160,8 @@
                                 <delegatePattern>true</delegatePattern>
                                 <!-- Generate only interfaces -->
                                 <interfaceOnly>true</interfaceOnly>
+                                <reactive>true</reactive>
+                                <useSpringBoot3>true</useSpringBoot3>
                                 <useTags>true</useTags>
                                 <apiFirst>true</apiFirst>
                                 <additionalModelTypeAnnotations>
@@ -207,9 +173,10 @@
                             </configOptions>
                             <generateApis>true</generateApis>
                             <generateModels>true</generateModels>
-                            <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
-                            <modelPackage>com.demo.ntfyappapi.dto</modelPackage>
-                            <apiPackage>com.demo.ntfyappapi.api</apiPackage>
+                            <supportingFilesToGenerate>GenTicketAPIUtil.java</supportingFilesToGenerate>
+                            <packageName>com.demo.genticket</packageName>
+                            <modelPackage>com.demo.genticket.model</modelPackage>
+                            <apiPackage>com.demo.genticket.api</apiPackage>
                         </configuration>
 
                     </execution>
@@ -217,31 +184,6 @@
             </plugin>
         </plugins>
     </build>
-    <repositories>
-        <repository>
-            <id>ftv-mvnproxy-releases</id>
-            <url>https://nexus.fintechviet.vn/repository/maven-public/</url>
-        </repository>
-        <repository>
-            <id>ftv-maven-releases</id>
-            <url>https://nexus.fintechviet.vn/repository/ftv-maven-release/</url>
-        </repository>
-        <repository>
-            <id>ftv-maven-snapshots</id>
-            <url>https://nexus.fintechviet.vn/repository/maven-snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-    <distributionManagement>
-        <repository>
-            <id>ftv-maven-releases</id>
-            <url>https://nexus.fintechviet.vn/repository/ftv-maven-release/</url>
-        </repository>
-        <snapshotRepository>
-            <id>ftv-maven-snapshots</id>
-            <url>https://nexus.fintechviet.vn/repository/ftv-maven-snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
+
+
 </project>

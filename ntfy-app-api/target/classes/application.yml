@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: ntfy-app-api
+  profiles:
+    active: dev
+  webflux:
+    base-path: /api/v1
+server:
+  port: 8080
+  undertow:
+    threads:
+      io: 4
+      worker: 4
+
+# Custom application properties
+app:
+  approval:
+    allowed-statuses: APPROVED,REJECTED,PENDING_REVIEW
+    auto-approve-threshold: 3
+    notification:
+      enabled: true
+      email-template: approval-notification.html
+
+  security:
+    cors:
+      allowed-origins: http://localhost:3000
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
+      allowed-headers: Authorization,Content-Type
+      max-age: 3600
+
+  cache:
+    enabled: true
+    ttl-seconds: 300
+  notification:
+    maker-topic: "maker-msg"
+    checker-topic: "checker-msg"
+
+  # For multi-tenancy and schema switching
+  tenant:
+    schema-based: true
+    default-tenant: ntfy-app

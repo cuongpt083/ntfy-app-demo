@@ -11,8 +11,7 @@ import com.demo.ntfyappapi.mapper.BookMapper;
 import com.demo.ntfyappapi.service.BookService;
 import com.demo.ntfyappapi.service.NotificationService;
 import lombok.RequiredArgsConstructor;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.startup.StartupEndpoint;
@@ -31,11 +30,11 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
     private final BookMapper bookMapper;
-    private static final Logger log = LogManager.getLogger(BookServiceImpl.class);
 
     @Value(value = "${app.notification.maker-topic}")
     private String MAKER_TOPIC;

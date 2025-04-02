@@ -10,7 +10,8 @@ import com.demo.ntfyappapi.exception.BookNotFoundException;
 import com.demo.ntfyappapi.exception.GeneralException;
 import com.demo.ntfyappapi.service.BookService;
 import lombok.RequiredArgsConstructor;
-import org.apache.log4j.Logger;
+//import org.apache.log4j2.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,13 +25,12 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class BooksApiDelegateImpl implements BooksApiDelegate {
     private final BookRepository bookRepository;
 
     @Autowired
     private BookService bookService;
-
-    private Logger log;
 
     /*@Autowired
     private Validator validator;*/
@@ -42,7 +42,7 @@ public class BooksApiDelegateImpl implements BooksApiDelegate {
             return bookService.createBook(bookDTO)
                     .map(savedBook -> ResponseEntity.status(HttpStatus.CREATED).body(savedBook))
                     .onErrorResume(err -> {
-                        log.error(err.getCause());
+                        log.error(err.getMessage());
                         return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null));
                     });
         }
