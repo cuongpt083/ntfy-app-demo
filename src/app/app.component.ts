@@ -1,11 +1,14 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import {Component} from '@angular/core';
+import {NotificationComponent} from '../notification/notification.component';
+import {RouterOutlet} from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  standalone: true,
+  styleUrl: './app.component.css',
+  imports:[NotificationComponent,
+    RouterOutlet]
 })
 export class AppComponent {
   title = 'notification';

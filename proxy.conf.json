@@ -1,0 +1,9 @@
+{
+  "/notification": {
+    "target": "https://notification.fintechviet.vn",
+    "secure": true,
+    "changeOrigin":"true",
+    "pathRewrite": {"/notification": ""}
+  }
+}
+
